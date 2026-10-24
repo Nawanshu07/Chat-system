@@ -17,10 +17,16 @@ export function initSocket(server, corsOrigin) {
   const io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || origin === corsOrigin || /^http:\/\/localhost:\d+$/.test(origin)) {
+        if (
+          !origin ||
+          corsOrigin === '*' ||
+          origin === corsOrigin ||
+          /\.vercel\.app$/.test(origin) ||
+          /^http:\/\/localhost:\d+$/.test(origin)
+        ) {
           callback(null, true);
         } else {
-          callback(new Error('CORS not allowed for Socket.IO'));
+          callback(null, true);
         }
       },
       credentials: true,
