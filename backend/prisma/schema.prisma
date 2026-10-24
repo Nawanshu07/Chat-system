@@ -8,16 +8,28 @@ generator client {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  username    String       @unique
-  email       String       @unique
-  password    String
-  avatar      String?
-  avatarColor String?      @default("bg-[#2e5fa3]")
-  isOnline    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  messages    Message[]
-  rooms       RoomMember[]
+  id              String       @id @default(cuid())
+  username        String       @unique
+  email           String       @unique
+  password        String
+  avatar          String?
+  avatarColor     String?      @default("bg-[#2e5fa3]")
+  isOnline        Boolean      @default(false)
+  isEmailVerified Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  messages        Message[]
+  rooms           RoomMember[]
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6-digit verification code
+  type      String   // "VERIFY_EMAIL" | "RESET_PASSWORD"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, type])
 }
 
 model Room {

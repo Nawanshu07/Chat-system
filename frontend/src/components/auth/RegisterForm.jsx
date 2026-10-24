@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
+import VerifyOtpModal from './VerifyOtpModal';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Username: 3-30 chars, only letters, numbers, underscores, hyphens
@@ -18,6 +19,8 @@ export default function RegisterForm({ onSwitch }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
+
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
 
@@ -57,8 +60,13 @@ export default function RegisterForm({ onSwitch }) {
       const username = form.username.trim();
       const email    = form.email.trim().toLowerCase();
       const data = await authApi.register(username, email, form.password);
-      setAuth(data.user, data.token);
-      navigate('/chat');
+
+      if (data.requiresVerification) {
+        setPendingVerifyEmail(data.email || email);
+      } else if (data.token) {
+        setAuth(data.user, data.token);
+        navigate('/chat');
+      }
     } catch (err) {
       const serverMessage = err.response?.data?.error;
       setError(serverMessage || 'Failed to create account. Please try again.');
@@ -68,46 +76,56 @@ export default function RegisterForm({ onSwitch }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      {FIELDS.map(({ id, name, label, type, placeholder, autoComplete, maxLength }) => (
-        <div key={name} className="flex flex-col gap-1.5">
-          <label htmlFor={id} className="text-xs font-semibold text-muted uppercase tracking-wider">
-            {label}
-          </label>
-          <input
-            id={id}
-            name={name}
-            type={type}
-            autoComplete={autoComplete}
-            value={form[name]}
-            onChange={handleChange}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            className="bg-[#1a1a1a] border border-line text-[#ededed] rounded-xl px-4 py-3 text-sm
-              placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-              transition-colors"
-          />
-        </div>
-      ))}
-      {error && (
-        <p role="alert" className="text-red-400 text-sm text-center">{error}</p>
-      )}
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-accent text-accent-text font-bold py-3 rounded-xl
-          hover:bg-accent-hover active:scale-[0.98]
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-all duration-150 mt-1"
-      >
-        {loading ? 'Creating account…' : 'Create Account'}
-      </button>
-      <p className="text-center text-sm text-muted">
-        Already have an account?{' '}
-        <button type="button" onClick={onSwitch} className="text-accent font-semibold hover:underline">
-          Sign in
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        {FIELDS.map(({ id, name, label, type, placeholder, autoComplete, maxLength }) => (
+          <div key={name} className="flex flex-col gap-1.5">
+            <label htmlFor={id} className="text-xs font-semibold text-muted uppercase tracking-wider">
+              {label}
+            </label>
+            <input
+              id={id}
+              name={name}
+              type={type}
+              autoComplete={autoComplete}
+              value={form[name]}
+              onChange={handleChange}
+              placeholder={placeholder}
+              maxLength={maxLength}
+              className="bg-[#1a1a1a] border border-line text-[#ededed] rounded-xl px-4 py-3 text-sm
+                placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                transition-colors"
+            />
+          </div>
+        ))}
+        {error && (
+          <p role="alert" className="text-red-400 text-sm text-center">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-accent text-accent-text font-bold py-3 rounded-xl
+            hover:bg-accent-hover active:scale-[0.98]
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-150 mt-1"
+        >
+          {loading ? 'Sending code…' : 'Create Account'}
         </button>
-      </p>
-    </form>
+        <p className="text-center text-sm text-muted">
+          Already have an account?{' '}
+          <button type="button" onClick={onSwitch} className="text-accent font-semibold hover:underline">
+            Sign In
+          </button>
+        </p>
+      </form>
+
+      {/* Verification OTP Modal */}
+      {pendingVerifyEmail && (
+        <VerifyOtpModal
+          email={pendingVerifyEmail}
+          onCancel={() => setPendingVerifyEmail('')}
+        />
+      )}
+    </>
   );
 }

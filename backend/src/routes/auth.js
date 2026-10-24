@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../db/prisma.js';
 import { JWT_SECRET } from '../config.js';
+import { sendOtpEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -15,6 +16,11 @@ const AVATAR_COLORS = [
   'bg-[#1e4d3b]', // green
 ];
 
+// Helper to generate 6-digit numeric OTP code
+function generateOtpCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 // Helper to sign JWT
 function generateToken(user) {
   return jwt.sign(
@@ -24,12 +30,11 @@ function generateToken(user) {
   );
 }
 
-// POST /api/auth/register
+// POST /api/auth/register — Start registration and send verification OTP
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Validate presence
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
@@ -37,10 +42,9 @@ router.post('/register', async (req, res) => {
     const trimmedUsername = String(username).trim();
     const normalizedEmail = String(email).trim().toLowerCase();
 
-    // Format validations
     if (!USERNAME_REGEX.test(trimmedUsername)) {
       return res.status(400).json({
-        error: 'Username must be 3–30 characters and contain only letters, numbers, hyphens, or underscores',
+        error: 'Username must be 3–30 characters: letters, numbers, hyphens, or underscores',
       });
     }
 
@@ -56,43 +60,112 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must include at least one number or uppercase letter' });
     }
 
-    // Check uniqueness
-    const existing = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedEmail },
-          { username: trimmedUsername },
-        ],
-      },
+    // Check existing accounts
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
     });
 
-    if (existing) {
-      if (existing.email.toLowerCase() === normalizedEmail) {
-        return res.status(409).json({ error: 'An account with this email already exists' });
-      }
+    if (existingEmail && existingEmail.isEmailVerified) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    const existingUsername = await prisma.user.findUnique({
+      where: { username: trimmedUsername },
+    });
+
+    if (existingUsername && existingUsername.email !== normalizedEmail && existingUsername.isEmailVerified) {
       return res.status(409).json({ error: 'This username is already taken' });
     }
 
-    // Hash password (10 salt rounds for quick responsive auth)
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Pick avatar color based on username hash
     const colorIndex = Math.abs(
       trimmedUsername.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     ) % AVATAR_COLORS.length;
     const avatarColor = AVATAR_COLORS[colorIndex];
     const avatar = trimmedUsername.charAt(0).toUpperCase();
 
-    // Create user
-    const newUser = await prisma.user.create({
-      data: {
+    // Create or update unverified user
+    await prisma.user.upsert({
+      where: { email: normalizedEmail },
+      update: {
+        username: trimmedUsername,
+        password: hashedPassword,
+        avatar,
+        avatarColor,
+        isEmailVerified: false,
+      },
+      create: {
         username: trimmedUsername,
         email: normalizedEmail,
         password: hashedPassword,
         avatar,
         avatarColor,
-        isOnline: true,
+        isEmailVerified: false,
       },
+    });
+
+    // Delete existing verify OTPs for this email
+    await prisma.otp.deleteMany({
+      where: { email: normalizedEmail, type: 'VERIFY_EMAIL' },
+    });
+
+    // Generate new OTP
+    const code = generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.otp.create({
+      data: {
+        email: normalizedEmail,
+        code,
+        type: 'VERIFY_EMAIL',
+        expiresAt,
+      },
+    });
+
+    // Send OTP email
+    await sendOtpEmail(normalizedEmail, code, 'VERIFY_EMAIL');
+
+    return res.status(200).json({
+      message: 'Verification code sent to your email',
+      email: normalizedEmail,
+      requiresVerification: true,
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ error: 'Internal server error while creating account' });
+  }
+});
+
+// POST /api/auth/verify-email — Verify 6-digit OTP to activate account
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and verification code are required' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const trimmedOtp = String(otp).trim();
+
+    const record = await prisma.otp.findFirst({
+      where: {
+        email: normalizedEmail,
+        type: 'VERIFY_EMAIL',
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!record || record.code !== trimmedOtp) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    // Activate user
+    const user = await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: { isEmailVerified: true },
       select: {
         id: true,
         username: true,
@@ -103,20 +176,183 @@ router.post('/register', async (req, res) => {
       },
     });
 
-    const token = generateToken(newUser);
+    // Clean up OTP
+    await prisma.otp.deleteMany({
+      where: { email: normalizedEmail, type: 'VERIFY_EMAIL' },
+    });
 
-    return res.status(201).json({
-      message: 'Account created successfully',
-      user: newUser,
+    const token = generateToken(user);
+
+    return res.json({
+      message: 'Email verified successfully!',
+      user,
       token,
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(500).json({ error: 'Internal server error while creating account' });
+    console.error('Verify email error:', error);
+    return res.status(500).json({ error: 'Failed to verify email' });
   }
 });
 
-// POST /api/auth/login
+// POST /api/auth/resend-otp — Resend a fresh OTP code
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { email, type = 'VERIFY_EMAIL' } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Rate-limit: Check if an OTP was requested in the last 45 seconds
+    const recentOtp = await prisma.otp.findFirst({
+      where: {
+        email: normalizedEmail,
+        type,
+        createdAt: { gt: new Date(Date.now() - 45 * 1000) },
+      },
+    });
+
+    if (recentOtp) {
+      return res.status(429).json({
+        error: 'Please wait at least 45 seconds before requesting another code',
+      });
+    }
+
+    // Generate new OTP
+    const code = generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Delete previous OTPs of this type
+    await prisma.otp.deleteMany({
+      where: { email: normalizedEmail, type },
+    });
+
+    await prisma.otp.create({
+      data: {
+        email: normalizedEmail,
+        code,
+        type,
+        expiresAt,
+      },
+    });
+
+    await sendOtpEmail(normalizedEmail, code, type);
+
+    return res.json({
+      message: 'A fresh verification code has been sent to your email',
+    });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    return res.status(500).json({ error: 'Failed to resend code' });
+  }
+});
+
+// POST /api/auth/forgot-password — Request password reset OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    // If user exists, create reset OTP and send email
+    if (user) {
+      await prisma.otp.deleteMany({
+        where: { email: normalizedEmail, type: 'RESET_PASSWORD' },
+      });
+
+      const code = generateOtpCode();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await prisma.otp.create({
+        data: {
+          email: normalizedEmail,
+          code,
+          type: 'RESET_PASSWORD',
+          expiresAt,
+        },
+      });
+
+      await sendOtpEmail(normalizedEmail, code, 'RESET_PASSWORD');
+    }
+
+    // Return consistent friendly message regardless to prevent email enumeration
+    return res.json({
+      message: 'If an account exists with this email, a 6-digit reset code has been sent.',
+      email: normalizedEmail,
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// POST /api/auth/reset-password — Reset password with 6-digit OTP
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Email, verification code, and new password are required' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const trimmedOtp = String(otp).trim();
+
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/[A-Z]/.test(newPassword) && !/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: 'Password must include at least one number or uppercase letter' });
+    }
+
+    const record = await prisma.otp.findFirst({
+      where: {
+        email: normalizedEmail,
+        type: 'RESET_PASSWORD',
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!record || record.code !== trimmedOtp) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: {
+        password: hashedPassword,
+        isEmailVerified: true, // Resetting via email verifies ownership
+      },
+    });
+
+    await prisma.otp.deleteMany({
+      where: { email: normalizedEmail, type: 'RESET_PASSWORD' },
+    });
+
+    return res.json({
+      message: 'Password reset successfully! You can now log in with your new password.',
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// POST /api/auth/login — Sign in (checks email verification)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -127,7 +363,6 @@ router.post('/login', async (req, res) => {
 
     const normalizedEmail = String(email).trim().toLowerCase();
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -136,10 +371,37 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Check if email has been verified
+    if (!user.isEmailVerified) {
+      // Send a fresh OTP automatically
+      const code = generateOtpCode();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await prisma.otp.deleteMany({
+        where: { email: normalizedEmail, type: 'VERIFY_EMAIL' },
+      });
+
+      await prisma.otp.create({
+        data: {
+          email: normalizedEmail,
+          code,
+          type: 'VERIFY_EMAIL',
+          expiresAt,
+        },
+      });
+
+      await sendOtpEmail(normalizedEmail, code, 'VERIFY_EMAIL');
+
+      return res.status(403).json({
+        error: 'Please verify your email address to continue.',
+        requiresVerification: true,
+        email: normalizedEmail,
+      });
     }
 
     const safeUser = {

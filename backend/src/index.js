@@ -2,8 +2,7 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import { PORT, CORS_ORIGIN } from './config.js';
-import prisma from './db/prisma.js';
-import { seedDatabase } from '../prisma/seed.js';
+import { cleanupDemoUsers } from '../prisma/clean-demo.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import roomsRoutes from './routes/rooms.js';
@@ -57,13 +56,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Database Seed endpoint (triggerable anytime)
-app.all('/api/seed', async (req, res) => {
+// Clean demo accounts endpoint
+app.all('/api/admin/clean-demo', async (req, res) => {
   try {
-    const result = await seedDatabase(prisma);
-    res.json({ message: 'Database seeded successfully', result });
+    const result = await cleanupDemoUsers();
+    res.json({ message: 'Demo accounts cleaned up successfully', result });
   } catch (err) {
-    console.error('Seed error:', err);
+    console.error('Clean demo error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -91,18 +90,7 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 initSocket(server, CORS_ORIGIN);
 
-server.listen(PORT, async () => {
+server.listen(PORT, () => {
   console.log(`🚀 Chat System Backend running on http://localhost:${PORT}`);
   console.log(`📡 CORS enabled for origin: ${CORS_ORIGIN}`);
-
-  // Automatically seed database on startup if empty
-  try {
-    const count = await prisma.user.count();
-    if (count === 0) {
-      console.log('🌱 Database is empty. Seeding starter accounts...');
-      await seedDatabase(prisma);
-    }
-  } catch (e) {
-    console.warn('⚠️ Auto-seed check notice:', e.message);
-  }
 });
