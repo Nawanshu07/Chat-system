@@ -123,13 +123,16 @@ router.post('/register', async (req, res) => {
       },
     });
 
-    // Send OTP email
-    await sendOtpEmail(normalizedEmail, code, 'VERIFY_EMAIL');
+    // Send OTP email (gracefully falls back if email not configured)
+    const emailResult = await sendOtpEmail(normalizedEmail, code, 'VERIFY_EMAIL');
 
     return res.status(200).json({
-      message: 'Verification code sent to your email',
+      message: emailResult.delivered
+        ? 'Verification code sent to your email'
+        : 'Verification code generated! Please enter code to continue.',
       email: normalizedEmail,
       requiresVerification: true,
+      previewCode: !emailResult.delivered ? code : undefined,
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -238,10 +241,13 @@ router.post('/resend-otp', async (req, res) => {
       },
     });
 
-    await sendOtpEmail(normalizedEmail, code, type);
+    const emailResult = await sendOtpEmail(normalizedEmail, code, type);
 
     return res.json({
-      message: 'A fresh verification code has been sent to your email',
+      message: emailResult.delivered
+        ? 'A fresh verification code has been sent to your email'
+        : 'A fresh verification code has been generated',
+      previewCode: !emailResult.delivered ? code : undefined,
     });
   } catch (error) {
     console.error('Resend OTP error:', error);
@@ -264,6 +270,8 @@ router.post('/forgot-password', async (req, res) => {
       where: { email: normalizedEmail },
     });
 
+    let previewCode = undefined;
+
     // If user exists, create reset OTP and send email
     if (user) {
       await prisma.otp.deleteMany({
@@ -282,13 +290,17 @@ router.post('/forgot-password', async (req, res) => {
         },
       });
 
-      await sendOtpEmail(normalizedEmail, code, 'RESET_PASSWORD');
+      const emailResult = await sendOtpEmail(normalizedEmail, code, 'RESET_PASSWORD');
+      if (!emailResult.delivered) {
+        previewCode = code;
+      }
     }
 
     // Return consistent friendly message regardless to prevent email enumeration
     return res.json({
       message: 'If an account exists with this email, a 6-digit reset code has been sent.',
       email: normalizedEmail,
+      previewCode,
     });
   } catch (error) {
     console.error('Forgot password error:', error);

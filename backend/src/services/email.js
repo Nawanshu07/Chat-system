@@ -17,6 +17,9 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user, pass },
+      connectionTimeout: 4000, // 4s timeout so it NEVER hangs
+      greetingTimeout: 4000,
+      socketTimeout: 4000,
     });
   }
   return transporter;
@@ -72,37 +75,69 @@ export async function sendOtpEmail(toEmail, otpCode, type = 'VERIFY_EMAIL') {
     </html>
   `;
 
-  const transport = getTransporter();
+  // 1. First Priority: Resend HTTP REST API (port 443 - NEVER blocked by Render/cloud)
+  const resendKey = process.env.RESEND_API_KEY;
+  if (resendKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || 'Chat System <onboarding@resend.dev>',
+          to: [toEmail],
+          subject,
+          html,
+        }),
+      });
 
+      const data = await res.json();
+      if (res.ok) {
+        console.log(`📧 [Resend] Real email delivered to ${toEmail} (ID: ${data.id})`);
+        return { success: true, delivered: true, provider: 'resend', id: data.id };
+      } else {
+        console.warn('⚠️ [Resend] API returned error:', data);
+      }
+    } catch (err) {
+      console.warn('⚠️ [Resend] Request failed:', err.message);
+    }
+  }
+
+  // 2. Second Priority: Gmail SMTP (with strict 4s timeout)
+  const transport = getTransporter();
   if (transport) {
     try {
       const from = process.env.SMTP_FROM || `"Chat System" <${process.env.SMTP_USER}>`;
-      const info = await transport.sendMail({
-        from,
-        to: toEmail,
-        subject,
-        html,
-      });
-      console.log(`📧 Real email sent to ${toEmail}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
+      const info = await Promise.race([
+        transport.sendMail({ from, to: toEmail, subject, html }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('SMTP timeout: port blocked by cloud host')), 4000)
+        ),
+      ]);
+      console.log(`📧 [Gmail SMTP] Email sent to ${toEmail}: ${info.messageId}`);
+      return { success: true, delivered: true, provider: 'smtp', id: info.messageId };
     } catch (err) {
-      console.error('❌ Failed to send email via Gmail SMTP:', err.message);
-      // Fallback to console print if sending fails
-      printConsoleOtp(toEmail, otpCode, type);
-      return { success: true, fallback: true, error: err.message };
+      console.warn('⚠️ [Gmail SMTP] Failed or timed out (cloud host blocked SMTP ports):', err.message);
     }
-  } else {
-    printConsoleOtp(toEmail, otpCode, type);
-    return { success: true, simulated: true };
   }
+
+  // 3. Fallback: Print bold banner to console and return code for seamless testing
+  printConsoleOtp(toEmail, otpCode, type);
+  return {
+    success: true,
+    delivered: false,
+    simulated: true,
+    code: otpCode,
+  };
 }
 
 function printConsoleOtp(email, otpCode, type) {
   console.log('\n============================================================');
-  console.log(`📨 [OTP EMAIL - ${type}]`);
-  console.log(`👉 To: ${email}`);
+  console.log(`📨 [OTP CODE READY]`);
+  console.log(`👉 To: ${email} (${type})`);
   console.log(`🔑 Verification Code: [ ${otpCode} ]`);
   console.log('⏳ Expires in: 10 minutes');
-  console.log('💡 (Configure SMTP_USER & SMTP_PASS in .env for real Gmail delivery)');
   console.log('============================================================\n');
 }

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
 
-export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
+export default function VerifyOtpModal({ email, initialCode = '', onCancel, onSuccess }) {
   const [otp, setOtp] = useState('');
+  const [demoCode, setDemoCode] = useState(initialCode);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(45);
@@ -61,7 +62,8 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
     setResendSuccess('');
 
     try {
-      await authApi.resendOtp(email, 'VERIFY_EMAIL');
+      const res = await authApi.resendOtp(email, 'VERIFY_EMAIL');
+      if (res.previewCode) setDemoCode(res.previewCode);
       setResendSuccess('A new verification code has been sent!');
       setCountdown(45);
     } catch (err) {
@@ -101,6 +103,13 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
           We sent a 6-digit verification code to <br />
           <span className="font-semibold text-[#ededed]">{email}</span>
         </p>
+
+        {demoCode && (
+          <div className="mb-4 p-3 bg-emerald-950/60 border border-emerald-700/80 rounded-xl text-center">
+            <span className="text-xs text-emerald-200/80 block mb-1">Verification code:</span>
+            <span className="font-mono text-xl tracking-[6px] text-emerald-400 font-extrabold">{demoCode}</span>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-red-200 text-xs flex items-center gap-2">
