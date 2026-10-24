@@ -20,7 +20,6 @@ export default function RegisterForm({ onSwitch }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
-  const [initialOtp, setInitialOtp] = useState('');
 
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -63,7 +62,6 @@ export default function RegisterForm({ onSwitch }) {
       const data = await authApi.register(username, email, form.password);
 
       if (data.requiresVerification) {
-        setInitialOtp(data.previewCode || '');
         setPendingVerifyEmail(data.email || email);
       } else if (data.token) {
         setAuth(data.user, data.token);
@@ -125,10 +123,8 @@ export default function RegisterForm({ onSwitch }) {
       {pendingVerifyEmail && (
         <VerifyOtpModal
           email={pendingVerifyEmail}
-          initialCode={initialOtp}
           onCancel={() => {
             setPendingVerifyEmail('');
-            setInitialOtp('');
           }}
         />
       )}

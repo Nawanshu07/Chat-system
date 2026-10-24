@@ -9,7 +9,6 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [demoCode, setDemoCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -34,8 +33,7 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
     setError('');
 
     try {
-      const res = await authApi.forgotPassword(cleanEmail);
-      if (res.previewCode) setDemoCode(res.previewCode);
+      await authApi.forgotPassword(cleanEmail);
       setStep(2);
       setCountdown(45);
     } catch (err) {
@@ -164,13 +162,6 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
             <p className="text-sm text-center text-muted mb-6">
               Enter the 6-digit code sent to <span className="text-[#ededed] font-semibold">{email}</span> and your new password.
             </p>
-
-            {demoCode && (
-              <div className="mb-4 p-3 bg-emerald-950/60 border border-emerald-700/80 rounded-xl text-center">
-                <span className="text-xs text-emerald-200/80 block mb-1">Reset verification code:</span>
-                <span className="font-mono text-xl tracking-[6px] text-emerald-400 font-extrabold">{demoCode}</span>
-              </div>
-            )}
 
             {error && (
               <div className="mb-4 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-red-200 text-xs">
