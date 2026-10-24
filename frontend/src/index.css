@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+  body {
+    background-color: #121212;
+    color: #ededed;
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #262626; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333; }
+}
+
+@layer utilities {
+  .bubble-mine   { border-radius: 18px 18px 4px 18px; }
+  .bubble-theirs { border-radius: 18px 18px 18px 4px; }
+}
