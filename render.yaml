@@ -17,6 +17,10 @@ services:
         value: "*"
       - key: RESEND_API_KEY
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: "nawanshusharma05@gmail.com"
 
 databases:
   - name: chat-db

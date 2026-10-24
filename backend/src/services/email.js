@@ -75,7 +75,38 @@ export async function sendOtpEmail(toEmail, otpCode, type = 'VERIFY_EMAIL') {
     </html>
   `;
 
-  // 1. Resend API (HTTPS Port 443 — Fast and Reliable)
+  // 1. Brevo API (HTTPS Port 443 — Sends to ANY recipient without requiring custom domain)
+  const brevoKey = process.env.BREVO_API_KEY;
+  if (brevoKey) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'nawanshusharma05@gmail.com';
+    const senderName = process.env.BREVO_SENDER_NAME || 'Chat System';
+
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'api-key': brevoKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: toEmail }],
+        subject,
+        htmlContent: html,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.status === 201 || (data && data.messageId)) {
+      console.log(`📧 [Brevo] Real email delivered to ${toEmail} (ID: ${data.messageId})`);
+      return { success: true, delivered: true, provider: 'brevo', id: data.messageId };
+    } else {
+      console.error('❌ [Brevo] Error:', data);
+      throw new Error(data.message || 'Failed to send verification email via Brevo');
+    }
+  }
+
+  // 2. Resend API (HTTPS Port 443)
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
     const from = process.env.RESEND_FROM || 'Chat System <onboarding@resend.dev>';
