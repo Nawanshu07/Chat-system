@@ -8,7 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 45000, // 45 seconds tolerance for cloud cold-starts
 });
 
 // Attach JWT token to requests if available

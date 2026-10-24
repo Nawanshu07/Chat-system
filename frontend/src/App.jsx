@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+import api from './services/api';
 import AuthPage from './pages/AuthPage';
 import ChatPage from './pages/ChatPage';
 
@@ -14,6 +16,11 @@ function PublicRoute({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Pre-warm backend immediately so Render wakes up before user submits forms
+    api.get('/health').catch(() => {});
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="h-full">
