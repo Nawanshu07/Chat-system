@@ -1,39 +1,19 @@
 import { useState } from 'react';
 import Sidebar from '../components/sidebar/Sidebar';
 import ChatWindow from '../components/chat/ChatWindow';
-import { useSocket } from '../hooks/useSocket';
 
 export default function ChatPage() {
-  // Keep persistent WebSocket connection active on chat page
-  useSocket();
+  const [isOpenMobile, setIsOpenMobile] = useState(false);
 
-  // On mobile: show sidebar or chat, not both
-  const [mobileView, setMobileView] = useState('sidebar'); // 'sidebar' | 'chat'
-
-  const handleSelectRoom = () => setMobileView('chat');
-  const handleBack = () => setMobileView('sidebar');
+  const handleSelectRoom = () => setIsOpenMobile(true);
+  const handleBack = () => setIsOpenMobile(false);
 
   return (
-    <div className="h-full flex bg-surface overflow-hidden">
-      {/* Sidebar — hidden on mobile when chat is open */}
-      <div
-        className={`
-          ${mobileView === 'chat' ? 'hidden' : 'flex'} md:flex
-          w-full md:w-[320px] flex-shrink-0
-        `}
-      >
-        <Sidebar onSelectRoom={handleSelectRoom} />
-      </div>
-
-      {/* Chat window — always flex-1, fills remaining space */}
-      <div
-        className={`
-          ${mobileView === 'sidebar' ? 'hidden' : 'flex'} md:flex
-          flex-1 min-w-0
-        `}
-      >
+    <div className={`app ${isOpenMobile ? 'open' : ''}`} id="app">
+      <Sidebar onSelectRoom={handleSelectRoom} />
+      <section className="main" id="main">
         <ChatWindow onBack={handleBack} />
-      </div>
+      </section>
     </div>
   );
 }

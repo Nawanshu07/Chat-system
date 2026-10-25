@@ -94,12 +94,12 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="bg-[#181818] border border-line rounded-2xl w-full max-w-md p-6 flex flex-col shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+      <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-6 flex flex-col shadow-2xl relative animate-pop-in">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted hover:text-[#ededed] p-1.5 rounded-lg transition-colors"
+          className="absolute top-4 right-4 text-muted hover:text-text p-1.5 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -108,13 +108,13 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
 
         {step === 1 && (
           <div>
-            <div className="w-12 h-12 rounded-full bg-accent/15 border border-accent/30 text-accent flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </div>
 
-            <h2 className="text-xl font-bold text-center text-[#ededed] mb-1">
+            <h2 className="text-xl font-bold text-center text-text mb-1">
               Reset Your Password
             </h2>
             <p className="text-sm text-center text-muted mb-6">
@@ -139,14 +139,14 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="you@example.com"
-                  className="w-full bg-[#121212] border border-line rounded-xl px-4 py-3 text-sm text-[#ededed] placeholder-muted focus:outline-none focus:border-accent"
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-sm text-text placeholder-muted focus:outline-none focus:border-accent"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="w-full bg-accent text-accent-text font-bold py-3 px-4 rounded-xl hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 mt-2 flex items-center justify-center gap-2"
+                className="w-full bg-accent text-on-accent font-bold py-3 px-4 rounded-xl hover:opacity-95 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 mt-2 flex items-center justify-center gap-2 shadow-xs"
               >
                 {loading ? 'Sending code...' : 'Send Reset Code'}
               </button>
@@ -182,7 +182,7 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
                   value={otp}
                   onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
                   placeholder="••••••"
-                  className="text-center font-mono text-2xl tracking-[8px] bg-[#121212] border border-line rounded-xl py-2.5 px-4 text-[#ededed] placeholder-muted focus:outline-none focus:border-accent"
+                  className="text-center font-mono text-2xl tracking-[8px] bg-bg border border-line rounded-xl py-2.5 px-4 text-text placeholder-muted focus:outline-none focus:border-accent"
                 />
               </div>
 
@@ -196,7 +196,7 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Min 8 chars, 1 uppercase/number"
-                  className="w-full bg-[#121212] border border-line rounded-xl px-4 py-2.5 text-sm text-[#ededed] placeholder-muted focus:outline-none focus:border-accent"
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm text-text placeholder-muted focus:outline-none focus:border-accent"
                 />
               </div>
 
@@ -210,14 +210,14 @@ export default function ForgotPasswordModal({ initialEmail = '', onClose, onLogi
                   value={confirm}
                   onChange={(e) => { setConfirm(e.target.value); setError(''); }}
                   placeholder="••••••••"
-                  className="w-full bg-[#121212] border border-line rounded-xl px-4 py-2.5 text-sm text-[#ededed] placeholder-muted focus:outline-none focus:border-accent"
+                  className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-sm text-text placeholder-muted focus:outline-none focus:border-accent"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || otp.length !== 6 || !password}
-                className="w-full bg-accent text-accent-text font-bold py-3 px-4 rounded-xl hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 mt-1 flex items-center justify-center gap-2"
+                className="w-full bg-accent text-on-accent font-bold py-3 px-4 rounded-xl hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 mt-1 flex items-center justify-center gap-2"
               >
                 {loading ? 'Updating password...' : 'Reset Password'}
               </button>

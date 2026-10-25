@@ -3,28 +3,24 @@ import { useAuthStore } from '../../store/authStore';
 import { useRoomStore } from '../../store/roomStore';
 import { usersApi } from '../../services/api';
 import { sound } from '../../services/sound';
+import { theme } from '../../services/theme';
 import Avatar from '../shared/Avatar';
 import SearchBar from './SearchBar';
 import RoomItem from './RoomItem';
 
 export default function Sidebar({ onSelectRoom }) {
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'unread'
+  const [isDark, setIsDark] = useState(theme.isDark());
+  const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [availableUsers, setAvailableUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
 
   const { user, logout } = useAuthStore();
   const { rooms, loading, activeRoomId, setActiveRoom, fetchRooms, createOrOpenDM } = useRoomStore();
 
-  const handleToggleSound = () => {
-    const next = !soundEnabled;
-    sound.setEnabled(next);
-    setSoundEnabled(next);
-  };
-
-  // Load rooms from backend on mount
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
@@ -53,9 +49,23 @@ export default function Sidebar({ onSelectRoom }) {
     };
   }, [isNewChatOpen, userSearchQuery]);
 
-  const filteredRooms = rooms.filter((r) =>
-    r.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleToggleTheme = () => {
+    const next = theme.toggle();
+    setIsDark(next === 'dark');
+  };
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    sound.setEnabled(next);
+    setSoundEnabled(next);
+  };
+
+  const filteredRooms = rooms.filter((r) => {
+    const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (activeTab === 'unread') return r.unread > 0;
+    return true;
+  });
 
   const handleSelect = (room) => {
     setActiveRoom(room.id);
@@ -75,120 +85,124 @@ export default function Sidebar({ onSelectRoom }) {
 
   return (
     <>
-      <aside className="w-full md:w-[320px] flex-shrink-0 flex flex-col bg-surface border-r border-line h-full relative">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-line">
-          <div className="flex items-center gap-2.5">
-            <Avatar
-              letter={user?.avatar || user?.username || 'U'}
-              size="sm"
-              color={user?.avatarColor || 'bg-accent'}
-            />
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm text-[#ededed] truncate max-w-[130px]">
-                {user?.username || 'You'}
-              </span>
-              <span className="text-[11px] text-muted truncate max-w-[130px]">
-                {user?.email}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {/* Sound toggle button */}
+      <aside className="side w-full md:w-[340px] flex-shrink-0 h-full relative select-none">
+        {/* Header matching .side-h in Design.md */}
+        <div className="side-h">
+          <h1>Chats</h1>
+
+          <div className="flex items-center gap-0.5">
+            {/* Theme Switcher Button */}
             <button
-              onClick={handleToggleSound}
-              title={soundEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                soundEnabled
-                  ? 'text-muted hover:text-[#4ade80] hover:bg-sidebar-hover'
-                  : 'text-muted/40 hover:text-muted hover:bg-sidebar-hover'
-              }`}
+              onClick={handleToggleTheme}
+              className="icon"
+              title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+              aria-label="Switch theme"
             >
-              {soundEnabled ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                  />
+              {isDark ? (
+                // Moon icon
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                  />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                // Sun icon
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="5" />
+                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
                 </svg>
               )}
             </button>
 
-            {/* New chat button */}
+            {/* Sound Toggle Button */}
+            <button
+              onClick={handleToggleSound}
+              className={`icon ${soundEnabled ? 'text-accent' : 'opacity-40'}`}
+              title={soundEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
+              aria-label="Toggle Sound"
+            >
+              {soundEnabled ? (
+                <svg viewBox="0 0 24 24">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              )}
+            </button>
+
+            {/* New Chat Button matching Design.md */}
             <button
               onClick={() => setIsNewChatOpen(true)}
-              title="Start a new chat"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-sidebar-hover hover:text-[#ededed] transition-colors"
+              className="icon"
+              title="New chat"
+              aria-label="New chat"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+              <svg viewBox="0 0 24 24">
+                <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
               </svg>
             </button>
-            {/* Logout button */}
+
+            {/* Logout Button */}
             <button
               onClick={logout}
-              title="Logout"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-sidebar-hover hover:text-[#ededed] transition-colors"
+              className="icon hover:text-red-500"
+              title="Log out"
+              aria-label="Log out"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
+              <svg viewBox="0 0 24 24">
+                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="pt-3 pb-1">
-          <SearchBar value={search} onChange={setSearch} />
+        {/* Search Input matching .search in Design.md */}
+        <SearchBar value={search} onChange={setSearch} />
+
+        {/* Tabs matching .tabs in Design.md */}
+        <div className="tabs">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`tab ${activeTab === 'all' ? 'on' : ''}`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setActiveTab('unread')}
+            className={`tab ${activeTab === 'unread' ? 'on' : ''}`}
+          >
+            Unread
+          </button>
         </div>
 
-        {/* Chats label */}
-        <div className="px-4 py-2 flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted">
-            Chats
-          </span>
-          {loading && (
-            <span className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          )}
-        </div>
-
-        {/* Room list */}
-        <div className="flex-1 overflow-y-auto">
-          {filteredRooms.length === 0 ? (
-            <div className="text-center px-4 mt-8 flex flex-col items-center gap-2">
-              <p className="text-muted text-sm">
-                {search ? 'No conversations matching search' : 'No conversations yet'}
+        {/* Chat List matching .list in Design.md */}
+        <div className="list">
+          {loading && rooms.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted flex items-center justify-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              Loading chats...
+            </div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="text-center px-4 py-12 flex flex-col items-center gap-2 text-muted text-sm">
+              <p>
+                {search
+                  ? 'No chats found.'
+                  : activeTab === 'unread'
+                  ? 'No unread messages.'
+                  : 'No conversations yet.'}
               </p>
               <button
                 onClick={() => {
                   setUserSearchQuery(search);
                   setIsNewChatOpen(true);
                 }}
-                className="text-xs text-accent hover:underline font-semibold"
+                className="text-xs text-accent hover:underline font-semibold mt-1"
               >
-                + Find someone to chat with
+                + Start a new chat
               </button>
             </div>
           ) : (
@@ -198,39 +212,56 @@ export default function Sidebar({ onSelectRoom }) {
                 room={room}
                 isActive={room.id === activeRoomId}
                 onClick={() => handleSelect(room)}
+                myId={user?.id}
               />
             ))
           )}
+        </div>
+
+        {/* Current User Profile Footer */}
+        <div className="px-4 py-2.5 border-t border-line flex items-center gap-2.5 bg-panel">
+          <Avatar
+            name={user?.username}
+            letter={user?.avatar || user?.username}
+            size="sm"
+            color={user?.avatarColor}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-text truncate">
+              {user?.username || 'You'}
+            </div>
+            <div className="text-xs text-muted truncate">
+              {user?.email}
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* New Chat Modal */}
       {isNewChatOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="bg-[#181818] border border-line rounded-2xl w-full max-w-md p-5 flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-5 flex flex-col shadow-2xl animate-pop-in">
             <div className="flex items-center justify-between pb-3 border-b border-line">
-              <h2 className="text-base font-bold text-[#ededed]">New Conversation</h2>
+              <h2 className="text-base font-bold text-text">New Conversation</h2>
               <button
                 onClick={() => {
                   setIsNewChatOpen(false);
                   setUserSearchQuery('');
                 }}
-                className="text-muted hover:text-[#ededed] p-1 rounded-lg"
+                className="text-muted hover:text-text p-1 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✕
               </button>
             </div>
 
             <div className="my-3">
               <input
                 type="text"
-                placeholder="Search registered users by name or email..."
+                placeholder="Search registered users by username or email..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full bg-[#121212] border border-line rounded-lg px-3.5 py-2 text-sm text-[#ededed] placeholder-muted focus:outline-none focus:border-accent"
+                className="w-full h-10 rounded-[20px] border-0 bg-bg text-text px-4 text-sm font-inherit placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
 
@@ -249,18 +280,18 @@ export default function Sidebar({ onSelectRoom }) {
                   <button
                     key={u.id}
                     onClick={() => handleStartDM(u)}
-                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-sidebar-hover text-left transition-colors"
+                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-hover text-left transition-colors"
                   >
-                    <Avatar letter={u.avatar || u.username} size="md" color={u.avatarColor} />
+                    <Avatar name={u.username} letter={u.avatar || u.username} size="md" color={u.avatarColor} />
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-[#ededed] truncate">
+                      <div className="font-semibold text-sm text-text truncate">
                         {u.username}
                       </div>
                       <div className="text-xs text-muted truncate">
                         {u.email}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-accent px-2 py-1 bg-accent/10 rounded-md">
+                    <span className="text-xs font-semibold text-accent px-2.5 py-1 bg-accent-soft rounded-lg">
                       Chat
                     </span>
                   </button>

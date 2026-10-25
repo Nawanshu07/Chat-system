@@ -92,7 +92,7 @@ export default function RegisterForm({ onSwitch }) {
               onChange={handleChange}
               placeholder={placeholder}
               maxLength={maxLength}
-              className="bg-[#1a1a1a] border border-line text-[#ededed] rounded-xl px-4 py-3 text-sm
+              className="bg-bg border border-line text-text rounded-xl px-4 py-3 text-sm
                 placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
                 transition-colors"
             />
@@ -104,10 +104,10 @@ export default function RegisterForm({ onSwitch }) {
         <button
           type="submit"
           disabled={loading}
-          className="bg-accent text-accent-text font-bold py-3 rounded-xl
-            hover:bg-accent-hover active:scale-[0.98]
+          className="bg-accent text-on-accent font-bold py-3 rounded-xl
+            hover:opacity-95 active:scale-[0.98]
             disabled:opacity-50 disabled:cursor-not-allowed
-            transition-all duration-150 mt-1"
+            transition-all duration-150 mt-1 shadow-xs"
         >
           {loading ? 'Sending code…' : 'Create Account'}
         </button>

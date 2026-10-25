@@ -5,7 +5,6 @@ import { useRoomStore } from '../../store/roomStore';
 import { useSocket } from '../../hooks/useSocket';
 import { sound } from '../../services/sound';
 import Avatar from '../shared/Avatar';
-import OnlineDot from '../shared/OnlineDot';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import Composer from './Composer';
@@ -27,7 +26,7 @@ function formatDividerDate(dateStr) {
   });
 }
 
-const STARTER_PROMPTS = ['👋 Hello!', "How's it going?", 'Hey, are you there?', 'Nice to meet you!'];
+const STARTER_PROMPTS = ['👋 Hello!', "How's it going?", 'Are you available today?', 'Nice to meet you!'];
 
 export default function ChatWindow({ onBack }) {
   const scrollContainerRef = useRef(null);
@@ -57,14 +56,12 @@ export default function ChatWindow({ onBack }) {
 
   const myId = user?.id || 'me';
 
-  // Toggle sound
   const handleToggleSound = () => {
     const next = !soundEnabled;
     sound.setEnabled(next);
     setSoundEnabled(next);
   };
 
-  // Fetch message history & mark read when room changes
   useEffect(() => {
     if (room?.id) {
       markRead(room.id);
@@ -73,7 +70,6 @@ export default function ChatWindow({ onBack }) {
     }
   }, [room?.id, markRead, fetchMessages]);
 
-  // Track scroll position
   const handleScroll = () => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -85,13 +81,11 @@ export default function ChatWindow({ onBack }) {
     }
   };
 
-  // Scroll to bottom helper
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
     setNewMessagesCount(0);
   };
 
-  // Smart auto-scroll on new messages
   const prevMsgCountRef = useRef(messages.length);
   useEffect(() => {
     const isNewArrival = messages.length > prevMsgCountRef.current;
@@ -109,7 +103,6 @@ export default function ChatWindow({ onBack }) {
     }
   }, [messages.length, isScrolledUp, myId]);
 
-  // Group messages & calculate clustering + date dividers
   const groupedItems = useMemo(() => {
     const items = [];
     let lastDateStr = null;
@@ -118,13 +111,11 @@ export default function ChatWindow({ onBack }) {
       const msg = messages[i];
       const dateStr = new Date(msg.createdAt).toDateString();
 
-      // Insert date divider if new day
       if (dateStr !== lastDateStr) {
         items.push({ type: 'divider', date: msg.createdAt, key: `div-${dateStr}` });
         lastDateStr = dateStr;
       }
 
-      // Check clustering with adjacent messages
       const prev = messages[i - 1];
       const next = messages[i + 1];
 
@@ -178,118 +169,104 @@ export default function ChatWindow({ onBack }) {
 
   if (!room) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-surface text-muted select-none px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center text-4xl mb-4 shadow-inner animate-pulse-dot">
+      <div className="flex-1 flex flex-col items-center justify-center bg-bg text-muted select-none px-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-panel border border-line flex items-center justify-center text-3xl mb-3 shadow-xs">
           💬
         </div>
-        <h2 className="text-xl font-bold text-[#ededed] mb-1">Your Messages</h2>
-        <p className="text-sm max-w-sm text-muted">
-          Select an existing conversation or start a new chat with registered users.
-        </p>
+        <p className="text-base font-semibold text-text mb-1">Select a chat to start messaging.</p>
+        <p className="text-xs text-muted">Choose from the list or start a new conversation.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-surface min-w-0 relative">
-      {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3.5 bg-header-bg border-b border-[#173d2e] flex-shrink-0 z-10 shadow-sm">
-        <div className="flex items-center gap-3 min-w-0">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="md:hidden text-header-sub hover:text-header-text p-1 -ml-1 rounded-lg transition-colors"
-              aria-label="Back"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
+    <div className="flex-1 flex flex-col bg-bg min-w-0 min-h-0 relative">
+      {/* Header matching .main-h in Design.md */}
+      <header className="main-h">
+        {/* Back button for mobile matching .back in Design.md */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="icon back"
+            aria-label="Back to chats"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+        )}
 
-          <div className="relative">
-            <Avatar letter={room.avatar} size="md" color={room.avatarColor} />
-            {room.isOnline && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-online rounded-full border-2 border-header-bg" />
-            )}
+        {/* 42px Avatar */}
+        <Avatar
+          name={room.name}
+          letter={room.avatar}
+          size="header"
+          isOnline={room.isOnline}
+          color={room.avatarColor}
+        />
+
+        {/* Title and status matching .t, .n, .s in Design.md */}
+        <div className="t">
+          <div className="n">
+            {room.name}
           </div>
-
-          <div className="min-w-0">
-            <h1 className="text-[16px] font-bold text-header-text truncate leading-tight">
-              {room.name}
-            </h1>
-            <p className="text-[12px] text-header-sub flex items-center gap-1.5 leading-tight mt-0.5">
-              {room.isOnline ? (
-                <>
-                  <OnlineDot isOnline />
-                  <span>Online now</span>
-                </>
-              ) : (
-                <span className="opacity-80">Offline</span>
-              )}
-            </p>
+          <div className="s">
+            {typingNames.length > 0 ? (
+              <span className="text-accent italic font-medium">typing…</span>
+            ) : room.isOnline ? (
+              <span className="text-online font-medium">online</span>
+            ) : (
+              'last seen recently'
+            )}
           </div>
         </div>
 
-        {/* Header Right Actions */}
-        <div className="flex items-center gap-1">
-          {/* Sound Toggle Button */}
+        {/* Header Action Icons matching Design.md */}
+        <div className="flex items-center gap-0.5">
+          {/* Sound Toggle */}
           <button
             onClick={handleToggleSound}
-            className={`p-2 rounded-xl text-header-sub hover:text-header-text hover:bg-black/20 transition-all ${
-              soundEnabled ? '' : 'opacity-50'
-            }`}
-            title={soundEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
+            className={`icon ${soundEnabled ? 'text-accent' : 'opacity-40'}`}
+            title={soundEnabled ? 'Mute sound' : 'Unmute sound'}
             aria-label="Toggle Sound"
           >
             {soundEnabled ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
+              <svg viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              <svg viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
               </svg>
             )}
           </button>
         </div>
       </header>
 
-      {/* Messages Scroll Area */}
+      {/* Message List matching .msgs in Design.md */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         role="log"
         aria-live="polite"
-        className="flex-1 overflow-y-auto px-4 md:px-6 py-4 flex flex-col gap-1 select-text"
+        className="msgs select-text"
       >
         {isLoading && messages.length === 0 ? (
           <div className="m-auto flex items-center gap-2 text-muted text-sm py-12">
-            <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             Loading messages...
           </div>
         ) : messages.length === 0 ? (
-          /* Humanized Empty Conversation Welcome Card */
-          <div className="m-auto flex flex-col items-center max-w-sm text-center py-10 animate-fade-in">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-accent to-[#1a4a35] flex items-center justify-center text-2xl font-bold text-accent-text mb-3 shadow-lg ring-4 ring-accent/15">
-              {room.avatar || room.name?.[0]?.toUpperCase() || '💬'}
-            </div>
-            <h3 className="text-base font-bold text-[#ededed] mb-1">
-              Start chatting with {room.name}
+          <div className="m-auto flex flex-col items-center max-w-sm text-center py-12 animate-fade-in">
+            <Avatar name={room.name} letter={room.avatar} size="lg" color={room.avatarColor} />
+            <h3 className="text-base font-semibold text-text mt-3 mb-1">
+              {room.name}
             </h3>
-            <p className="text-xs text-muted mb-5">
-              Send your first message or pick a quick starter below:
+            <p className="text-xs text-muted mb-4">
+              Send a message to start the conversation.
             </p>
 
             <div className="flex flex-wrap justify-center gap-2">
@@ -297,7 +274,7 @@ export default function ChatWindow({ onBack }) {
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="px-3.5 py-1.5 bg-[#181818] hover:bg-[#222] border border-[#2c2c2c] hover:border-accent/40 rounded-full text-xs text-[#dcdcdc] font-medium transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  className="px-3 py-1.5 bg-panel hover:bg-hover border border-line rounded-full text-xs text-text font-medium transition-all hover:scale-105 active:scale-95 shadow-2xs"
                 >
                   {prompt}
                 </button>
@@ -308,10 +285,8 @@ export default function ChatWindow({ onBack }) {
           groupedItems.map((item) => {
             if (item.type === 'divider') {
               return (
-                <div key={item.key} className="flex justify-center my-3 select-none">
-                  <span className="px-3 py-0.5 bg-[#181818]/90 border border-[#282828] text-[11px] font-semibold text-muted rounded-full shadow-sm">
-                    {formatDividerDate(item.date)}
-                  </span>
+                <div key={item.key} className="day select-none">
+                  {formatDividerDate(item.date)}
                 </div>
               );
             }
@@ -328,7 +303,6 @@ export default function ChatWindow({ onBack }) {
           })
         )}
 
-        {/* Typing indicator */}
         <TypingIndicator names={typingNames} />
 
         <div ref={bottomRef} aria-hidden="true" />
@@ -338,16 +312,16 @@ export default function ChatWindow({ onBack }) {
       {isScrolledUp && newMessagesCount > 0 && (
         <button
           onClick={() => scrollToBottom(true)}
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-accent text-accent-text font-bold text-xs rounded-full shadow-xl hover:bg-accent-hover transition-all animate-pill-bounce flex items-center gap-1.5"
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 bg-accent text-on-accent font-semibold text-xs rounded-full shadow-lg hover:opacity-95 transition-all animate-pill-bounce flex items-center gap-1.5"
         >
           <span>↓ New messages</span>
-          <span className="w-5 h-5 bg-white text-accent rounded-full text-[10px] flex items-center justify-center font-extrabold">
+          <span className="w-4 h-4 bg-white text-accent rounded-full text-[10px] grid place-items-center font-bold">
             {newMessagesCount}
           </span>
         </button>
       )}
 
-      {/* Composer */}
+      {/* Composer matching .comp in Design.md */}
       <Composer onSend={handleSend} onTyping={handleTyping} />
     </div>
   );

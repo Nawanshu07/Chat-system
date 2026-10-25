@@ -73,13 +73,13 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="bg-[#181818] border border-line rounded-2xl w-full max-w-md p-6 flex flex-col shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+      <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-6 flex flex-col shadow-2xl relative animate-pop-in">
         {/* Close Button */}
         {onCancel && (
           <button
             onClick={onCancel}
-            className="absolute top-4 right-4 text-muted hover:text-[#ededed] p-1.5 rounded-lg transition-colors"
+            className="absolute top-4 right-4 text-muted hover:text-text p-1.5 rounded-lg transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -88,18 +88,18 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
         )}
 
         {/* Header Icon */}
-        <div className="w-12 h-12 rounded-full bg-accent/15 border border-accent/30 text-accent flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto mb-4">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
 
-        <h2 className="text-xl font-bold text-center text-[#ededed] mb-1">
+        <h2 className="text-xl font-bold text-center text-text mb-1">
           Verify Your Email
         </h2>
         <p className="text-sm text-center text-muted mb-6">
           We sent a 6-digit verification code to <br />
-          <span className="font-semibold text-[#ededed]">{email}</span>
+          <span className="font-semibold text-text">{email}</span>
         </p>
 
         {error && (
@@ -131,14 +131,14 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="••••••"
-              className="text-center font-mono text-2xl tracking-[10px] bg-[#121212] border border-line rounded-xl py-3 px-4 text-[#ededed] placeholder-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+              className="text-center font-mono text-2xl tracking-[10px] bg-bg border border-line rounded-xl py-3 px-4 text-text placeholder-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || otp.length !== 6}
-            className="w-full bg-accent text-accent-text font-bold py-3 px-4 rounded-xl hover:bg-accent-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2"
+            className="w-full bg-accent text-on-accent font-bold py-3 px-4 rounded-xl hover:opacity-95 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2 shadow-xs"
           >
             {loading ? (
               <>
