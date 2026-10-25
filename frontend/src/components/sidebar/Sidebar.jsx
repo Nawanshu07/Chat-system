@@ -88,7 +88,7 @@ export default function Sidebar({ onSelectRoom }) {
       <aside className="side w-full md:w-[340px] flex-shrink-0 h-full relative select-none">
         <div className="side-h">
           <div className="flex items-center gap-2.5">
-            <img src="/favicon.svg" alt="Chatly" className="w-7 h-7 rounded-lg shadow-xs flex-none" />
+            <img src="/icon.png" alt="Chatly" className="w-7 h-7 object-contain flex-none" />
             <h1>Chats</h1>
           </div>
 

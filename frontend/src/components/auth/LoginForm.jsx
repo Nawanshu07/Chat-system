@@ -5,7 +5,6 @@ import { authApi } from '../../services/api';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import VerifyOtpModal from './VerifyOtpModal';
 
-// Simple but solid email regex — validates format before hitting the server
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export default function LoginForm({ onSwitch }) {
@@ -26,7 +25,7 @@ export default function LoginForm({ onSwitch }) {
   const validate = () => {
     const email = form.email.trim();
     const password = form.password;
-    if (!email || !password) return 'Please fill in all fields.';
+    if (!email || !password) return 'Please enter your email and password.';
     if (!EMAIL_REGEX.test(email)) return 'Please enter a valid email address.';
     if (password.length < 6) return 'Password must be at least 6 characters.';
     return null;
@@ -49,7 +48,7 @@ export default function LoginForm({ onSwitch }) {
         return;
       }
       const serverMessage = err.response?.data?.error;
-      setError(serverMessage || 'Failed to sign in. Please check your credentials.');
+      setError(serverMessage || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -57,39 +56,22 @@ export default function LoginForm({ onSwitch }) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="login-email" className="text-xs font-semibold text-muted uppercase tracking-wider">
-            Email
-          </label>
-          <input
-            id="login-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="you@example.com"
-            maxLength={254}
-            className="bg-bg border border-line text-text rounded-xl px-4 py-3 text-sm
-              placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-              transition-colors"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+        <input
+          id="login-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email address"
+          maxLength={254}
+          className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+            placeholder:text-muted focus:outline-none focus:border-accent
+            transition-colors"
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="login-password" className="text-xs font-semibold text-muted uppercase tracking-wider">
-              Password
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowForgot(true)}
-              className="text-xs text-accent hover:underline font-semibold"
-            >
-              Forgot password?
-            </button>
-          </div>
+        <div className="flex flex-col gap-1">
           <input
             id="login-password"
             name="password"
@@ -97,35 +79,44 @@ export default function LoginForm({ onSwitch }) {
             autoComplete="current-password"
             value={form.password}
             onChange={handleChange}
-            placeholder="••••••••"
+            placeholder="Password"
             maxLength={128}
-            className="bg-bg border border-line text-text rounded-xl px-4 py-3 text-sm
-              placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+            className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+              placeholder:text-muted focus:outline-none focus:border-accent
               transition-colors"
           />
+          <div className="flex justify-end pt-0.5">
+            <button
+              type="button"
+              onClick={() => setShowForgot(true)}
+              className="text-xs text-muted hover:text-text transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
         </div>
 
         {error && (
-          <p role="alert" className="text-red-400 text-sm text-center">{error}</p>
+          <p role="alert" className="text-red-400 text-xs text-center">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-accent text-on-accent font-bold py-3 rounded-xl
+          className="w-full h-11 bg-accent text-on-accent font-semibold text-sm rounded-xl
             hover:opacity-95 active:scale-[0.98]
             disabled:opacity-50 disabled:cursor-not-allowed
-            transition-all duration-150 mt-1 shadow-xs"
+            transition-all duration-150 mt-1"
         >
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
 
-        <p className="text-center text-sm text-muted">
+        <div className="text-center text-xs text-muted pt-2">
           Don&apos;t have an account?{' '}
-          <button type="button" onClick={onSwitch} className="text-accent font-semibold hover:underline">
+          <button type="button" onClick={onSwitch} className="text-accent font-medium hover:underline">
             Register
           </button>
-        </p>
+        </div>
       </form>
 
       {/* Forgot Password Modal */}

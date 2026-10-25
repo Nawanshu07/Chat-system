@@ -5,15 +5,7 @@ import { authApi } from '../../services/api';
 import VerifyOtpModal from './VerifyOtpModal';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-// Username: 3-30 chars, only letters, numbers, underscores, hyphens
 const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
-
-const FIELDS = [
-  { id: 'reg-username', name: 'username', label: 'Username',        type: 'text',     placeholder: 'cooluser',       autoComplete: 'username',     maxLength: 30 },
-  { id: 'reg-email',    name: 'email',    label: 'Email',           type: 'email',    placeholder: 'you@example.com', autoComplete: 'email',        maxLength: 254 },
-  { id: 'reg-password', name: 'password', label: 'Password',        type: 'password', placeholder: '••••••••',        autoComplete: 'new-password', maxLength: 128 },
-  { id: 'reg-confirm',  name: 'confirm',  label: 'Confirm Password', type: 'password', placeholder: '••••••••',        autoComplete: 'new-password', maxLength: 128 },
-];
 
 export default function RegisterForm({ onSwitch }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
@@ -38,7 +30,7 @@ export default function RegisterForm({ onSwitch }) {
     if (!username || !email || !password || !confirm)
       return 'Please fill in all fields.';
     if (!USERNAME_REGEX.test(username))
-      return 'Username must be 3–30 chars: letters, numbers, _ or - only.';
+      return 'Username must be 3–30 chars (letters, numbers, _ or -).';
     if (!EMAIL_REGEX.test(email))
       return 'Please enter a valid email address.';
     if (password.length < 8)
@@ -77,46 +69,84 @@ export default function RegisterForm({ onSwitch }) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-        {FIELDS.map(({ id, name, label, type, placeholder, autoComplete, maxLength }) => (
-          <div key={name} className="flex flex-col gap-1.5">
-            <label htmlFor={id} className="text-xs font-semibold text-muted uppercase tracking-wider">
-              {label}
-            </label>
-            <input
-              id={id}
-              name={name}
-              type={type}
-              autoComplete={autoComplete}
-              value={form[name]}
-              onChange={handleChange}
-              placeholder={placeholder}
-              maxLength={maxLength}
-              className="bg-bg border border-line text-text rounded-xl px-4 py-3 text-sm
-                placeholder:text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                transition-colors"
-            />
-          </div>
-        ))}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+        <input
+          id="reg-username"
+          name="username"
+          type="text"
+          autoComplete="username"
+          value={form.username}
+          onChange={handleChange}
+          placeholder="Username"
+          maxLength={30}
+          className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+            placeholder:text-muted focus:outline-none focus:border-accent
+            transition-colors"
+        />
+
+        <input
+          id="reg-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email address"
+          maxLength={254}
+          className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+            placeholder:text-muted focus:outline-none focus:border-accent
+            transition-colors"
+        />
+
+        <input
+          id="reg-password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          value={form.password}
+          onChange={handleChange}
+          placeholder="Password (min 8 characters)"
+          maxLength={128}
+          className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+            placeholder:text-muted focus:outline-none focus:border-accent
+            transition-colors"
+        />
+
+        <input
+          id="reg-confirm"
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          value={form.confirm}
+          onChange={handleChange}
+          placeholder="Confirm password"
+          maxLength={128}
+          className="w-full h-11 bg-bg border border-line text-text rounded-xl px-4 text-sm
+            placeholder:text-muted focus:outline-none focus:border-accent
+            transition-colors"
+        />
+
         {error && (
-          <p role="alert" className="text-red-400 text-sm text-center">{error}</p>
+          <p role="alert" className="text-red-400 text-xs text-center">{error}</p>
         )}
+
         <button
           type="submit"
           disabled={loading}
-          className="bg-accent text-on-accent font-bold py-3 rounded-xl
+          className="w-full h-11 bg-accent text-on-accent font-semibold text-sm rounded-xl
             hover:opacity-95 active:scale-[0.98]
             disabled:opacity-50 disabled:cursor-not-allowed
-            transition-all duration-150 mt-1 shadow-xs"
+            transition-all duration-150 mt-1"
         >
           {loading ? 'Sending code…' : 'Create Account'}
         </button>
-        <p className="text-center text-sm text-muted">
+
+        <div className="text-center text-xs text-muted pt-2">
           Already have an account?{' '}
-          <button type="button" onClick={onSwitch} className="text-accent font-semibold hover:underline">
+          <button type="button" onClick={onSwitch} className="text-accent font-medium hover:underline">
             Sign In
           </button>
-        </p>
+        </div>
       </form>
 
       {/* Verification OTP Modal */}
