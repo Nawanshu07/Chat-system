@@ -50,7 +50,7 @@ export default function MessageBubble({
     <div
       className={`group relative flex flex-col ${isMine ? 'items-end' : 'items-start'} ${
         isFirst ? 'mt-2' : 'mt-0.5'
-      } animate-spring-up select-text`}
+      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -62,31 +62,39 @@ export default function MessageBubble({
       )}
 
       <div className="relative max-w-[min(520px,78%)]">
-        {/* Floating Action Bar on Hover */}
+        {/* Floating Action Bar on Hover — docked horizontally beside the bubble */}
         {showActions && (
           <div
-            className={`absolute -top-8 z-20 flex items-center gap-0.5 bg-panel border border-line rounded-full px-1.5 py-0.5 shadow-lg backdrop-blur-md animate-pop-in ${
-              isMine ? 'right-0' : 'left-0'
-            }`}
+            className={`
+              absolute top-1/2 -translate-y-1/2 z-30 flex items-center gap-1
+              bg-panel border border-line rounded-full px-2 py-1 shadow-lg backdrop-blur-md
+              animate-pop-in select-none
+              ${
+                isMine
+                  ? 'right-[calc(100%+8px)] before:-right-2.5'
+                  : 'left-[calc(100%+8px)] before:-left-2.5'
+              }
+              before:content-[''] before:absolute before:inset-y-0 before:w-3
+            `}
           >
             {QUICK_REACTIONS.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleToggleReaction(emoji)}
-                className="hover:scale-125 active:scale-95 transition-transform p-0.5 text-xs"
+                className="hover:scale-130 active:scale-95 transition-transform p-0.5 text-xs leading-none"
                 title={`React ${emoji}`}
               >
                 {emoji}
               </button>
             ))}
-            <div className="w-[1px] h-3 bg-line mx-1" />
+            <div className="w-[1px] h-3.5 bg-line mx-0.5" />
             <button
               onClick={handleCopy}
-              className="text-muted hover:text-text p-0.5 text-[11px] font-semibold transition-colors flex items-center gap-1"
+              className="text-muted hover:text-text p-0.5 text-xs font-semibold transition-colors flex items-center justify-center"
               title="Copy text"
             >
               {copied ? (
-                <span className="text-online text-[10px]">Copied!</span>
+                <span className="text-online text-[10px] font-bold">✓</span>
               ) : (
                 <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="1.8">
                   <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

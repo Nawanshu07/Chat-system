@@ -7,7 +7,7 @@ import VerifyOtpModal from './VerifyOtpModal';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export default function LoginForm({ onSwitch }) {
+export default function LoginForm({ onSwitch, onSuccess }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,8 +40,15 @@ export default function LoginForm({ onSwitch }) {
     try {
       const email = form.email.trim().toLowerCase();
       const data = await authApi.login(email, form.password);
-      setAuth(data.user, data.token);
-      navigate('/chat');
+      if (onSuccess) {
+        onSuccess(data);
+        setTimeout(() => {
+          setAuth(data.user, data.token);
+        }, 900);
+      } else {
+        setAuth(data.user, data.token);
+        navigate('/chat');
+      }
     } catch (err) {
       if (err.response?.data?.requiresVerification) {
         setVerifyEmail(err.response?.data?.email || form.email.trim().toLowerCase());
@@ -131,6 +138,7 @@ export default function LoginForm({ onSwitch }) {
       {verifyEmail && (
         <VerifyOtpModal
           email={verifyEmail}
+          onSuccess={onSuccess}
           onCancel={() => setVerifyEmail('')}
         />
       )}

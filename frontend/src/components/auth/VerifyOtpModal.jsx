@@ -42,9 +42,15 @@ export default function VerifyOtpModal({ email, onCancel, onSuccess }) {
 
     try {
       const data = await authApi.verifyEmail(email, cleanOtp);
-      setAuth(data.user, data.token);
-      onSuccess?.(data.user);
-      navigate('/chat');
+      if (onSuccess) {
+        onSuccess(data);
+        setTimeout(() => {
+          setAuth(data.user, data.token);
+        }, 900);
+      } else {
+        setAuth(data.user, data.token);
+        navigate('/chat');
+      }
     } catch (err) {
       const msg = err.response?.data?.error || 'Invalid or expired verification code.';
       setError(msg);

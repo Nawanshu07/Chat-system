@@ -124,6 +124,35 @@
 .border-panel { border-color: var(--panel) !important; }
 .border-accent { border-color: var(--accent) !important; }
 
+/* Smooth Transition & Loading Keyframes */
+@keyframes progressIndeterminate {
+  0% { transform: translateX(-100%); width: 35%; }
+  50% { transform: translateX(80%); width: 55%; }
+  100% { transform: translateX(260%); width: 35%; }
+}
+
+.animate-progress {
+  animation: progressIndeterminate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-page-enter {
+  animation: pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Design.md Core Prototype Components */
 .app {
   display: grid;

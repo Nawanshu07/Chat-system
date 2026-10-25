@@ -9,7 +9,7 @@ export default function ChatPage() {
   const handleBack = () => setIsOpenMobile(false);
 
   return (
-    <div className={`app ${isOpenMobile ? 'open' : ''}`} id="app">
+    <div className={`app ${isOpenMobile ? 'open' : ''} animate-page-enter`} id="app">
       <Sidebar onSelectRoom={handleSelectRoom} />
       <section className="main" id="main">
         <ChatWindow onBack={handleBack} />

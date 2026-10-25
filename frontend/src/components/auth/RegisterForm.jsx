@@ -7,7 +7,7 @@ import VerifyOtpModal from './VerifyOtpModal';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
 
-export default function RegisterForm({ onSwitch }) {
+export default function RegisterForm({ onSwitch, onSuccess }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,8 +56,15 @@ export default function RegisterForm({ onSwitch }) {
       if (data.requiresVerification) {
         setPendingVerifyEmail(data.email || email);
       } else if (data.token) {
-        setAuth(data.user, data.token);
-        navigate('/chat');
+        if (onSuccess) {
+          onSuccess(data);
+          setTimeout(() => {
+            setAuth(data.user, data.token);
+          }, 900);
+        } else {
+          setAuth(data.user, data.token);
+          navigate('/chat');
+        }
       }
     } catch (err) {
       const serverMessage = err.response?.data?.error;
@@ -153,6 +160,7 @@ export default function RegisterForm({ onSwitch }) {
       {pendingVerifyEmail && (
         <VerifyOtpModal
           email={pendingVerifyEmail}
+          onSuccess={onSuccess}
           onCancel={() => {
             setPendingVerifyEmail('');
           }}
