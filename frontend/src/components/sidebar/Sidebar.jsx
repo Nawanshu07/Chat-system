@@ -5,6 +5,7 @@ import { usersApi } from '../../services/api';
 import { sound } from '../../services/sound';
 import { theme } from '../../services/theme';
 import Avatar from '../shared/Avatar';
+import SettingsModal from '../shared/SettingsModal';
 import SearchBar from './SearchBar';
 import RoomItem from './RoomItem';
 
@@ -13,6 +14,7 @@ export default function Sidebar({ onSelectRoom }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'unread'
   const [isDark, setIsDark] = useState(theme.isDark());
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Modal State
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
@@ -144,47 +146,6 @@ export default function Sidebar({ onSelectRoom }) {
           </div>
 
           <div className="flex items-center gap-0.5">
-            {/* Theme Switcher Button */}
-            <button
-              onClick={handleToggleTheme}
-              className="icon"
-              title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-              aria-label="Switch theme"
-            >
-              {isDark ? (
-                <svg viewBox="0 0 24 24">
-                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="5" />
-                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                </svg>
-              )}
-            </button>
-
-            {/* Sound Toggle Button */}
-            <button
-              onClick={handleToggleSound}
-              className={`icon ${soundEnabled ? 'text-accent' : 'opacity-40'}`}
-              title={soundEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
-              aria-label="Toggle Sound"
-            >
-              {soundEnabled ? (
-                <svg viewBox="0 0 24 24">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                  <line x1="23" y1="9" x2="17" y2="15" />
-                  <line x1="17" y1="9" x2="23" y2="15" />
-                </svg>
-              )}
-            </button>
-
             {/* New Group Button */}
             <button
               onClick={() => {
@@ -203,7 +164,7 @@ export default function Sidebar({ onSelectRoom }) {
               </svg>
             </button>
 
-            {/* New Chat Button matching Design.md */}
+            {/* New Chat Button */}
             <button
               onClick={() => {
                 setModalTab('dm');
@@ -218,15 +179,16 @@ export default function Sidebar({ onSelectRoom }) {
               </svg>
             </button>
 
-            {/* Logout Button */}
+            {/* Settings Button */}
             <button
-              onClick={logout}
-              className="icon hover:text-red-500"
-              title="Log out"
-              aria-label="Log out"
+              onClick={() => setIsSettingsOpen(true)}
+              className="icon"
+              title="Settings"
+              aria-label="Settings"
             >
               <svg viewBox="0 0 24 24">
-                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </button>
           </div>
@@ -304,7 +266,11 @@ export default function Sidebar({ onSelectRoom }) {
         </div>
 
         {/* Current User Profile Footer */}
-        <div className="px-4 py-2.5 border-t border-line flex items-center gap-2.5 bg-panel">
+        <div
+          onClick={() => setIsSettingsOpen(true)}
+          className="px-4 py-2.5 border-t border-line flex items-center gap-2.5 bg-panel cursor-pointer hover:bg-hover transition-colors"
+          title="Open Settings"
+        >
           <Avatar
             name={user?.username}
             letter={user?.avatar || user?.username}
@@ -319,6 +285,21 @@ export default function Sidebar({ onSelectRoom }) {
               {user?.email}
             </div>
           </div>
+          <button
+            type="button"
+            className="icon text-muted hover:text-text"
+            title="Settings"
+            aria-label="Settings"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSettingsOpen(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
         </div>
       </aside>
 
@@ -571,6 +552,12 @@ export default function Sidebar({ onSelectRoom }) {
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </>
   );
 }

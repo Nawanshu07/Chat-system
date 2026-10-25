@@ -3,10 +3,9 @@ import { sound } from '../../services/sound';
 
 function formatTime(isoString) {
   if (!isoString) return '';
-  return new Date(isoString).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(isoString)
+    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    .replace(/\s+/g, '\u00A0');
 }
 
 const QUICK_REACTIONS = ['❤️', '👍', '😂', '🔥', '😮'];
@@ -138,7 +137,7 @@ export default function MessageBubble({
         >
           <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
           <span
-            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 text-[11px] font-medium leading-none select-none ${
+            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 text-[11px] font-medium leading-none select-none whitespace-nowrap flex-nowrap ${
               isMine ? 'text-[var(--out-meta)]' : 'text-muted'
             }`}
           >

@@ -462,6 +462,7 @@
 .m {
   display: flow-root;
   width: fit-content;
+  min-width: 82px;
   max-width: min(540px, 80%);
   padding: 6px 10px 6px 12px;
   line-height: 1.4;

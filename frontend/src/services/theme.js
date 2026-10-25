@@ -10,10 +10,8 @@ class ThemeManager {
     if (typeof window === 'undefined') return 'dark';
     const saved = localStorage.getItem('chatly_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    // Default to dark or system preference
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    // Default to dark mode
+    return 'dark';
   }
 
   applyTheme(theme) {
