@@ -46,12 +46,13 @@ export default function MessageBubble({
 
   const hasReactions = Object.keys(reactions).length > 0;
   const isFirst = groupPosition === 'top' || groupPosition === 'single';
+  const isLast = groupPosition === 'bottom' || groupPosition === 'single';
 
   return (
     <div
-      className={`group relative flex flex-col ${isMine ? 'items-end' : 'items-start'} ${
-        isFirst ? 'mt-2' : 'mt-0.5'
-      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text`}
+      className={`group relative flex flex-col ${isMine ? 'self-end items-end' : 'self-start items-start'} ${
+        isFirst ? 'mt-2.5' : 'mt-[2px]'
+      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text w-fit max-w-[80%] min-[900px]:max-w-[65%]`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -65,7 +66,7 @@ export default function MessageBubble({
         </span>
       )}
 
-      <div className="relative max-w-[min(520px,78%)]">
+      <div className="relative w-fit">
         {/* Floating Action Bar on Hover — docked horizontally beside the bubble */}
         {showActions && (
           <div
@@ -112,7 +113,7 @@ export default function MessageBubble({
         <div
           className={`
             m ${isMine ? 'out' : 'in'}
-            text-[14.5px] leading-[1.42] break-words transition-colors relative
+            text-[14.5px] leading-[1.42] break-words transition-colors relative w-fit
             ${
               isMine
                 ? 'bg-out text-out-text rounded-[16px] rounded-br-[4px]'
@@ -122,21 +123,23 @@ export default function MessageBubble({
         >
           <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
             <span className="whitespace-pre-wrap select-text">{message.content}</span>
-            <span
-              className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 ${
-                isMine ? 'text-[var(--out-meta)]' : 'text-muted'
-              }`}
-            >
-              <span>{formatTime(message.createdAt)}</span>
-              {isMine && (
-                <span
-                  className="tracking-tighter font-semibold text-[11px]"
-                  title={isDelivered ? 'Delivered' : 'Sent'}
-                >
-                  {isDelivered ? '✓✓' : '✓'}
-                </span>
-              )}
-            </span>
+            {isLast && (
+              <span
+                className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 ${
+                  isMine ? 'text-[var(--out-meta)]' : 'text-muted'
+                }`}
+              >
+                <span>{formatTime(message.createdAt)}</span>
+                {isMine && (
+                  <span
+                    className="tracking-tighter font-semibold text-[11px]"
+                    title={isDelivered ? 'Delivered' : 'Sent'}
+                  >
+                    {isDelivered ? '✓✓' : '✓'}
+                  </span>
+                )}
+              </span>
+            )}
           </div>
         </div>
 

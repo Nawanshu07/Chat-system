@@ -306,7 +306,7 @@ export default function ChatWindow({ onBack }) {
         aria-live="polite"
         className="msgs select-text"
       >
-        <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-end">
+        <div className="chat-column">
           {isLoading && messages.length === 0 ? (
             <div className="m-auto flex items-center gap-2 text-muted text-sm py-12">
               <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
