@@ -188,6 +188,7 @@ export function initSocket(server, corsOrigin) {
           senderId: msg.senderId,
           senderName: msg.sender.username,
           senderAvatar: msg.sender.avatar,
+          senderColor: msg.sender.avatarColor,
           createdAt: msg.createdAt,
         };
 
@@ -215,6 +216,11 @@ export function initSocket(server, corsOrigin) {
             messages: {
               orderBy: { createdAt: 'desc' },
               take: 1,
+              include: {
+                sender: {
+                  select: { username: true },
+                },
+              },
             },
           },
         });

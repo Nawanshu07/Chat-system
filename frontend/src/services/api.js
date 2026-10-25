@@ -104,6 +104,18 @@ export const roomsApi = {
     const res = await api.get(`/rooms/${roomId}`);
     return res.data;
   },
+  addMembers: async (roomId, memberIds) => {
+    const res = await api.post(`/rooms/${roomId}/members`, { memberIds });
+    return res.data;
+  },
+  leaveGroup: async (roomId) => {
+    const res = await api.post(`/rooms/${roomId}/leave`);
+    return res.data;
+  },
+  updateGroup: async (roomId, data) => {
+    const res = await api.patch(`/rooms/${roomId}`, data);
+    return res.data;
+  },
 };
 
 // Messages Endpoints

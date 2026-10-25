@@ -8,6 +8,7 @@ import Avatar from '../shared/Avatar';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import Composer from './Composer';
+import GroupInfoModal from './GroupInfoModal';
 
 function formatDividerDate(dateStr) {
   if (!dateStr) return '';
@@ -36,6 +37,7 @@ export default function ChatWindow({ onBack }) {
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
+  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
 
   const { user } = useAuthStore();
   const activeRoomId = useRoomStore((s) => s.activeRoomId);
@@ -53,6 +55,11 @@ export default function ChatWindow({ onBack }) {
   const messages = room ? getMessages(room.id) : [];
   const typingNames = room ? getTypingUsers(room.id) : [];
   const isLoading = room ? !!loadingRooms[room.id] : false;
+
+  const onlineCount = useMemo(() => {
+    if (!room?.members) return 0;
+    return room.members.filter((m) => m.isOnline).length;
+  }, [room?.members]);
 
   const myId = user?.id || 'me';
 
@@ -202,17 +209,36 @@ export default function ChatWindow({ onBack }) {
           letter={room.avatar}
           size="header"
           isOnline={room.isOnline}
+          isGroup={!room.isDM}
           color={room.avatarColor}
         />
 
         {/* Title and status matching .t, .n, .s in Design.md */}
-        <div className="t">
-          <div className="n">
-            {room.name}
+        <div
+          className={`t ${!room.isDM ? 'cursor-pointer hover:opacity-85' : ''}`}
+          onClick={() => {
+            if (!room.isDM) setIsGroupInfoOpen(true);
+          }}
+          title={!room.isDM ? 'Click to view group details' : undefined}
+        >
+          <div className="n flex items-center gap-1.5">
+            <span className="truncate">{room.name}</span>
+            {!room.isDM && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-line/80 text-muted flex-shrink-0">
+                Group
+              </span>
+            )}
           </div>
           <div className="s">
             {typingNames.length > 0 ? (
-              <span className="text-accent italic font-medium">typing…</span>
+              <span className="text-accent italic font-medium">
+                {typingNames[0]} is typing…
+              </span>
+            ) : !room.isDM ? (
+              <span>
+                {room.members?.length || 0} members
+                {onlineCount > 0 ? ` · ${onlineCount} online` : ''}
+              </span>
             ) : room.isOnline ? (
               <span className="text-online font-medium">online</span>
             ) : (
@@ -223,6 +249,22 @@ export default function ChatWindow({ onBack }) {
 
         {/* Header Action Icons matching Design.md */}
         <div className="flex items-center gap-0.5">
+          {/* Group Info Icon */}
+          {!room.isDM && (
+            <button
+              onClick={() => setIsGroupInfoOpen(true)}
+              className="icon"
+              title="Group info"
+              aria-label="Group info"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+            </button>
+          )}
+
           {/* Sound Toggle */}
           <button
             onClick={handleToggleSound}
@@ -324,6 +366,11 @@ export default function ChatWindow({ onBack }) {
 
       {/* Composer matching .comp in Design.md */}
       <Composer onSend={handleSend} onTyping={handleTyping} />
+
+      {/* Group Info Modal */}
+      {isGroupInfoOpen && room && !room.isDM && (
+        <GroupInfoModal room={room} onClose={() => setIsGroupInfoOpen(false)} />
+      )}
     </div>
   );
 }

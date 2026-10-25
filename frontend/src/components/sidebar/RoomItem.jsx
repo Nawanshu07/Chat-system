@@ -51,12 +51,20 @@ export default function RoomItem({ room, isActive, onClick, myId }) {
         letter={room.avatar}
         size="md"
         isOnline={room.isOnline}
+        isGroup={!room.isDM}
         color={room.avatarColor}
       />
 
       <span className="meta">
         <span className="row">
-          <span className="name">{room.name}</span>
+          <span className="name flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{room.name}</span>
+            {!room.isDM && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-line/60 text-muted flex-shrink-0">
+                Group
+              </span>
+            )}
+          </span>
           <span className="time">{formatTimestamp(room.lastMessageTime)}</span>
         </span>
 
@@ -69,7 +77,11 @@ export default function RoomItem({ room, isActive, onClick, myId }) {
             <span className="prev">
               {room.lastMessage ? (
                 <>
-                  {isLastMsgMine && 'You: '}
+                  {isLastMsgMine
+                    ? 'You: '
+                    : !room.isDM && room.lastMessageSenderName
+                    ? `${room.lastMessageSenderName}: `
+                    : ''}
                   {room.lastMessage}
                 </>
               ) : (

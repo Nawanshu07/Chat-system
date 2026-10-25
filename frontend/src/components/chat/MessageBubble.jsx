@@ -57,7 +57,10 @@ export default function MessageBubble({
     >
       {/* Sender name for group chats */}
       {!isMine && showSender && isFirst && (
-        <span className="text-[11px] font-semibold text-accent mb-0.5 pl-1">
+        <span
+          className="text-[11px] font-semibold mb-0.5 pl-1 select-none"
+          style={{ color: message.senderColor || '#3B82F6' }}
+        >
           {message.senderName || 'Member'}
         </span>
       )}

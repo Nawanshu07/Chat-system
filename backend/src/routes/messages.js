@@ -68,6 +68,7 @@ router.get('/:id/messages', authenticateToken, async (req, res) => {
       senderId: msg.senderId,
       senderName: msg.sender.username,
       senderAvatar: msg.sender.avatar,
+      senderColor: msg.sender.avatarColor,
       createdAt: msg.createdAt,
     }));
 
@@ -139,6 +140,7 @@ router.post('/:id/messages', authenticateToken, async (req, res) => {
       senderId: message.senderId,
       senderName: message.sender.username,
       senderAvatar: message.sender.avatar,
+      senderColor: message.sender.avatarColor,
       createdAt: message.createdAt,
     };
 

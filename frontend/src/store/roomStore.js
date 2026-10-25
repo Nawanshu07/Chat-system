@@ -82,11 +82,16 @@ export const useRoomStore = create((set, get) => ({
   setUserOnline: (userId, isOnline) =>
     set((s) => ({
       rooms: s.rooms.map((r) => {
-        if (r.isDM) {
-          const isPartner = r.members?.some((m) => m.id === userId);
-          if (isPartner) {
-            return { ...r, isOnline };
-          }
+        const isPartner = r.members?.some((m) => m.id === userId);
+        if (isPartner) {
+          const updatedMembers = (r.members || []).map((m) =>
+            m.id === userId ? { ...m, isOnline } : m
+          );
+          return {
+            ...r,
+            members: updatedMembers,
+            isOnline: r.isDM ? isOnline : updatedMembers.some((m) => m.isOnline),
+          };
         }
         return r;
       }),
@@ -95,11 +100,15 @@ export const useRoomStore = create((set, get) => ({
   setOnlineUsers: (onlineUserIds) =>
     set((s) => ({
       rooms: s.rooms.map((r) => {
-        if (r.isDM) {
-          const isPartnerOnline = r.members?.some((m) => onlineUserIds.includes(m.id));
-          return { ...r, isOnline: !!isPartnerOnline };
-        }
-        return r;
+        const updatedMembers = (r.members || []).map((m) => ({
+          ...m,
+          isOnline: onlineUserIds.includes(m.id),
+        }));
+        return {
+          ...r,
+          members: updatedMembers,
+          isOnline: updatedMembers.some((m) => m.isOnline),
+        };
       }),
     })),
 
@@ -117,6 +126,65 @@ export const useRoomStore = create((set, get) => ({
       return room;
     } catch (err) {
       console.error('Failed to create/open DM:', err);
+      throw err;
+    }
+  },
+
+  createGroup: async (name, memberIds) => {
+    try {
+      const data = await roomsApi.createGroup(name, memberIds);
+      const room = data.room;
+      const currentRooms = get().rooms;
+      set({ rooms: [room, ...currentRooms.filter((r) => r.id !== room.id)] });
+      set({ activeRoomId: room.id });
+      return room;
+    } catch (err) {
+      console.error('Failed to create group:', err);
+      throw err;
+    }
+  },
+
+  addMembersToGroup: async (roomId, memberIds) => {
+    try {
+      const data = await roomsApi.addMembers(roomId, memberIds);
+      const room = data.room;
+      set((s) => ({
+        rooms: s.rooms.map((r) => (r.id === roomId ? { ...r, ...room } : r)),
+      }));
+      return room;
+    } catch (err) {
+      console.error('Failed to add members to group:', err);
+      throw err;
+    }
+  },
+
+  leaveGroup: async (roomId) => {
+    try {
+      await roomsApi.leaveGroup(roomId);
+      set((s) => {
+        const remaining = s.rooms.filter((r) => r.id !== roomId);
+        const nextActive = s.activeRoomId === roomId ? remaining[0]?.id || null : s.activeRoomId;
+        return {
+          rooms: remaining,
+          activeRoomId: nextActive,
+        };
+      });
+    } catch (err) {
+      console.error('Failed to leave group:', err);
+      throw err;
+    }
+  },
+
+  updateGroup: async (roomId, data) => {
+    try {
+      const res = await roomsApi.updateGroup(roomId, data);
+      const room = res.room;
+      set((s) => ({
+        rooms: s.rooms.map((r) => (r.id === roomId ? { ...r, ...room } : r)),
+      }));
+      return room;
+    } catch (err) {
+      console.error('Failed to update group:', err);
       throw err;
     }
   },
