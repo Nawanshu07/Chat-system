@@ -86,9 +86,11 @@ export default function Sidebar({ onSelectRoom }) {
   return (
     <>
       <aside className="side w-full md:w-[340px] flex-shrink-0 h-full relative select-none">
-        {/* Header matching .side-h in Design.md */}
         <div className="side-h">
-          <h1>Chats</h1>
+          <div className="flex items-center gap-2.5">
+            <img src="/favicon.svg" alt="Chatly" className="w-7 h-7 rounded-lg shadow-xs flex-none" />
+            <h1>Chats</h1>
+          </div>
 
           <div className="flex items-center gap-0.5">
             {/* Theme Switcher Button */}

@@ -170,8 +170,8 @@ export default function ChatWindow({ onBack }) {
   if (!room) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-bg text-muted select-none px-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-panel border border-line flex items-center justify-center text-3xl mb-3 shadow-xs">
-          💬
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 shadow-md overflow-hidden animate-pop-in">
+          <img src="/favicon.svg" alt="Chatly" className="w-16 h-16" />
         </div>
         <p className="text-base font-semibold text-text mb-1">Select a chat to start messaging.</p>
         <p className="text-xs text-muted">Choose from the list or start a new conversation.</p>

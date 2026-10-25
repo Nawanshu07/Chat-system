@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="chatly-bg" x1="40" y1="30" x2="480" y2="490" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#368D87" />
+      <stop offset="60%" stop-color="#2A6F6B" />
+      <stop offset="100%" stop-color="#164340" />
+    </linearGradient>
+
+    <!-- Subtle Top Highlight -->
+    <linearGradient id="chatly-shine" x1="256" y1="12" x2="256" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Front Bubble Shadow -->
+    <filter id="chatly-shadow" x="90" y="100" width="340" height="310" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#071b1a" flood-opacity="0.32" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Squircle Base -->
+  <rect width="512" height="512" rx="120" fill="url(#chatly-bg)" />
+  <rect x="8" y="8" width="496" height="496" rx="114" stroke="url(#chatly-shine)" stroke-width="4" />
+
+  <!-- Back Secondary Bubble -->
+  <path
+    d="M336 170 C336 170 380 178 396 210 C412 242 402 284 380 306 C362 324 336 332 308 332 L260 332 L220 368 C212 375 200 371 200 360 L200 332 C170 332 144 320 130 298 C144 304 162 306 182 306 L290 306 C326 306 354 278 354 242 C354 212 338 186 312 174 C320 172 328 170 336 170 Z"
+    fill="#88D7D0"
+    fill-opacity="0.38"
+  />
+
+  <!-- Main Front Speech Bubble -->
+  <g filter="url(#chatly-shadow)">
+    <path
+      d="M140 156 C140 131.7 159.7 112 184 112 L336 112 C360.3 112 380 131.7 380 156 L380 252 C380 276.3 360.3 296 336 296 L216 296 L154 348 C144.5 356 130 349.3 130 337 L130 292 C136 288 140 280 140 272 L140 156 Z"
+      fill="#FFFFFF"
+    />
+  </g>
+
+  <!-- 3 Communication Wave Dots -->
+  <circle cx="216" cy="204" r="16" fill="#2A6F6B" />
+  <circle cx="260" cy="204" r="16" fill="#2A6F6B" />
+  <circle cx="304" cy="204" r="16" fill="#2A6F6B" />
+
+  <!-- Live Online Status Dot on Top-Right of Bubble -->
+  <circle cx="384" cy="120" r="26" fill="#3CB878" stroke="#FFFFFF" stroke-width="7" />
+</svg>

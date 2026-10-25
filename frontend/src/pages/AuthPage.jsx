@@ -10,10 +10,8 @@ export default function AuthPage() {
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo / brand matching Chatly */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-accent rounded-2xl grid place-items-center mx-auto mb-3 shadow-md shadow-accent/20">
-            <svg className="w-7 h-7 text-on-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 shadow-lg shadow-accent/20 overflow-hidden">
+            <img src="/favicon.svg" alt="Chatly" className="w-14 h-14" />
           </div>
           <h1 className="text-2xl font-bold text-text tracking-tight">Chatly</h1>
           <p className="text-sm text-muted mt-0.5">Modern web messenger</p>
