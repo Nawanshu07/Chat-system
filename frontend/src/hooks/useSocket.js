@@ -85,6 +85,14 @@ export function useSocket() {
       socket.on('conversation_updated', ({ room, message }) => {
         if (!room) return;
         useRoomStore.getState().handleConversationUpdated({ room, message });
+        if (message) {
+          useMessageStore.getState().addMessage(room.id, message);
+          if (message.senderId !== user.id) {
+            sound.playReceived();
+          }
+        }
+        // Auto-join socket room for newly created or active rooms
+        socket.emit('join_room', { roomId: room.id });
       });
 
       // 4. Typing indicators

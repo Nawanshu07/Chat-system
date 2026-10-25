@@ -298,6 +298,7 @@ export default function ChatWindow({ onBack }) {
                 isMine={item.message.senderId === myId}
                 groupPosition={item.groupPosition}
                 showSender={!room.isDM}
+                isDelivered={room.isDM ? !!room.isOnline : true}
               />
             );
           })

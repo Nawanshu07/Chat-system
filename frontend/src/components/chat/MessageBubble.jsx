@@ -16,6 +16,7 @@ export default function MessageBubble({
   isMine,
   groupPosition = 'single',
   showSender = false,
+  isDelivered = false,
   onReaction,
 }) {
   const [showActions, setShowActions] = useState(false);
@@ -124,7 +125,14 @@ export default function MessageBubble({
             }`}
           >
             {formatTime(message.createdAt)}
-            {isMine && <span className="ml-1 tracking-tighter">✓✓</span>}
+            {isMine && (
+              <span
+                className="ml-1 tracking-tighter"
+                title={isDelivered ? 'Delivered' : 'Sent'}
+              >
+                {isDelivered ? '✓✓' : '✓'}
+              </span>
+            )}
           </small>
         </div>
 

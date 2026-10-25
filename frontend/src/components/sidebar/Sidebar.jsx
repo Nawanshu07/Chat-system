@@ -42,7 +42,15 @@ export default function Sidebar({ onSelectRoom }) {
       }
     };
 
-    const timer = setTimeout(searchUsers, 250);
+    // Instant load when opening modal, fast 150ms debounce when typing
+    if (!userSearchQuery) {
+      searchUsers();
+      return () => {
+        active = false;
+      };
+    }
+
+    const timer = setTimeout(searchUsers, 150);
     return () => {
       active = false;
       clearTimeout(timer);
@@ -241,48 +249,67 @@ export default function Sidebar({ onSelectRoom }) {
 
       {/* New Chat Modal */}
       {isNewChatOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-5 flex flex-col shadow-2xl animate-pop-in">
-            <div className="flex items-center justify-between pb-3 border-b border-line">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-4 sm:p-5 flex flex-col shadow-2xl animate-pop-in max-h-[85vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-line flex-shrink-0">
               <h2 className="text-base font-bold text-text">New Conversation</h2>
               <button
                 onClick={() => {
                   setIsNewChatOpen(false);
                   setUserSearchQuery('');
                 }}
-                className="text-muted hover:text-text p-1 rounded-lg transition-colors"
+                className="text-muted hover:text-text w-8 h-8 rounded-full flex items-center justify-center hover:bg-hover transition-colors"
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <div className="my-3">
+            <div className="my-3 relative flex-shrink-0">
               <input
                 type="text"
-                placeholder="Search registered users by username or email..."
+                placeholder="Search by username or email..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full h-10 rounded-[20px] border-0 bg-bg text-text px-4 text-sm font-inherit placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full h-11 rounded-[22px] border-0 bg-bg text-text px-4 pr-9 text-base placeholder:text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
               />
+              {userSearchQuery && (
+                <button
+                  onClick={() => setUserSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text text-xs p-1"
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1">
+            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-1 pr-1">
               {loadingUsers ? (
-                <div className="py-6 text-center text-sm text-muted flex items-center justify-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                  Searching users...
+                <div className="py-8 text-center text-sm text-muted flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                  Searching registered users...
                 </div>
               ) : availableUsers.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted">
-                  No registered users found
-                </p>
+                <div className="py-8 px-4 text-center text-muted">
+                  <p className="text-sm font-medium text-text mb-1">
+                    {userSearchQuery
+                      ? `No user found matching "${userSearchQuery}"`
+                      : 'No other registered users found yet'}
+                  </p>
+                  <p className="text-xs">
+                    {userSearchQuery
+                      ? 'Try searching by their exact username or email address.'
+                      : 'Once another user registers, they will appear here.'}
+                  </p>
+                </div>
               ) : (
                 availableUsers.map((u) => (
                   <button
                     key={u.id}
                     onClick={() => handleStartDM(u)}
-                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-hover text-left transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-hover active:bg-hover/80 text-left transition-colors min-h-[52px]"
                   >
                     <Avatar name={u.username} letter={u.avatar || u.username} size="md" color={u.avatarColor} />
                     <div className="flex-1 min-w-0">
@@ -293,7 +320,7 @@ export default function Sidebar({ onSelectRoom }) {
                         {u.email}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-accent px-2.5 py-1 bg-accent-soft rounded-lg">
+                    <span className="text-xs font-semibold text-accent px-3 py-1.5 bg-accent-soft rounded-lg flex-shrink-0">
                       Chat
                     </span>
                   </button>

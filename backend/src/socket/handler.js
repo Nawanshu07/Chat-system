@@ -191,10 +191,10 @@ export function initSocket(server, corsOrigin) {
           createdAt: msg.createdAt,
         };
 
-        // 1. Broadcast to everyone currently viewing the room
+        // 1. Broadcast to everyone currently viewing the room directly
         io.to(`room:${roomId}`).emit('new_message', { message: formattedMessage });
 
-        // 2. Fetch room details to notify all members' sidebars
+        // 2. Fetch room details to notify all members' sidebars and deliver real-time messages
         const room = await prisma.room.findUnique({
           where: { id: roomId },
           include: {
@@ -219,9 +219,12 @@ export function initSocket(server, corsOrigin) {
           },
         });
 
-        // Broadcast to every member's personal user room so their sidebar gets updated immediately!
+        // Broadcast to every member's personal user room so they receive the message and sidebar updates in real time!
         if (room) {
           for (const member of room.members) {
+            // Send new_message to each member's user room (ensures delivery even if they haven't joined room:id yet)
+            io.to(`user:${member.userId}`).emit('new_message', { message: formattedMessage });
+
             const formattedRoom = formatRoomForUser(room, member.userId);
             io.to(`user:${member.userId}`).emit('conversation_updated', {
               room: formattedRoom,

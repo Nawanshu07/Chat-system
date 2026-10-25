@@ -174,6 +174,8 @@ router.post('/:id/messages', authenticateToken, async (req, res) => {
       }).then((fullRoom) => {
         if (fullRoom) {
           for (const member of fullRoom.members) {
+            io.to(`user:${member.userId}`).emit('new_message', { message: formattedMessage });
+
             const formatted = formatRoomForUser(fullRoom, member.userId);
             io.to(`user:${member.userId}`).emit('conversation_updated', {
               room: formatted,

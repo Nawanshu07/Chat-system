@@ -19,12 +19,20 @@ router.get('/', authenticateToken, async (req, res) => {
       id: { not: currentUserId },
     };
 
+    const isPostgres = (process.env.DATABASE_URL || '').startsWith('postgres');
+
     if (search && typeof search === 'string') {
-      const q = search.trim();
-      if (q.length > 0) {
+      const raw = search.trim();
+      const cleanQ = raw.startsWith('@') ? raw.slice(1).trim() : raw;
+      if (cleanQ.length > 0) {
+        const makeContains = (field) =>
+          isPostgres
+            ? { [field]: { contains: cleanQ, mode: 'insensitive' } }
+            : { [field]: { contains: cleanQ } };
+
         where.OR = [
-          { username: { contains: q } },
-          { email: { contains: q } },
+          makeContains('username'),
+          makeContains('email'),
         ];
       }
     }
