@@ -21,6 +21,19 @@
 }
 
 @layer utilities {
-  .bubble-mine   { border-radius: 18px 18px 4px 18px; }
-  .bubble-theirs { border-radius: 18px 18px 18px 4px; }
+  /* Natural message clustering border radiuses */
+  .bubble-mine-single   { border-radius: 18px 18px 4px 18px; }
+  .bubble-mine-top      { border-radius: 18px 18px 6px 18px; }
+  .bubble-mine-middle   { border-radius: 18px 6px 6px 18px; }
+  .bubble-mine-bottom   { border-radius: 18px 6px 4px 18px; }
+
+  .bubble-theirs-single { border-radius: 18px 18px 18px 4px; }
+  .bubble-theirs-top    { border-radius: 18px 18px 18px 6px; }
+  .bubble-theirs-middle { border-radius: 6px 18px 18px 6px; }
+  .bubble-theirs-bottom { border-radius: 6px 18px 18px 4px; }
+
+  /* Soft shadow for depth */
+  .bubble-shadow {
+    box-shadow: 0 1px 2px -0.5px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
 }

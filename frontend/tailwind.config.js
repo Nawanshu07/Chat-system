@@ -33,14 +33,17 @@ export default {
         'bubble-theirs': '18px 18px 18px 4px',
       },
       animation: {
-        'dot-bounce': 'dotBounce 1.4s infinite ease-in-out both',
-        'fade-in':    'fadeIn 0.15s ease-out',
-        'slide-up':   'slideUp 0.2s ease-out',
-        'pulse-dot':  'pulseDot 2s infinite',
+        'dot-bounce':  'dotBounce 1.4s infinite ease-in-out both',
+        'fade-in':     'fadeIn 0.15s ease-out',
+        'slide-up':    'slideUp 0.2s ease-out',
+        'pulse-dot':   'pulseDot 2s infinite',
+        'spring-in':   'springIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'pop-in':      'popIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'pill-bounce': 'pillBounce 2.5s infinite ease-in-out',
       },
       keyframes: {
         dotBounce: {
-          '0%, 80%, 100%': { transform: 'scale(0)', opacity: '0.3' },
+          '0%, 80%, 100%': { transform: 'scale(0.3)', opacity: '0.4' },
           '40%':            { transform: 'scale(1)', opacity: '1' },
         },
         fadeIn: {
@@ -48,8 +51,21 @@ export default {
           to:   { opacity: '1' },
         },
         slideUp: {
-          from: { opacity: '0', transform: 'translateY(8px)' },
+          from: { opacity: '0', transform: 'translateY(10px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        springIn: {
+          '0%':   { opacity: '0', transform: 'scale(0.92) translateY(6px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        popIn: {
+          '0%':   { opacity: '0', transform: 'scale(0.5)' },
+          '70%':  { transform: 'scale(1.15)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        pillBounce: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%':      { transform: 'translateY(-4px)' },
         },
         pulseDot: {
           '0%, 100%': { boxShadow: '0 0 0 0 rgba(159, 216, 183, 0.5)' },

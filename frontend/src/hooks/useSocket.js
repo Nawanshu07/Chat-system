@@ -3,10 +3,12 @@ import { io } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 import { useRoomStore } from '../store/roomStore';
 import { useMessageStore } from '../store/messageStore';
+import { sound } from '../services/sound';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 let socketInstance = null;
+let connectionCount = 0;
 
 export function getSocket() {
   return socketInstance;
@@ -24,74 +26,86 @@ export function useSocket() {
       if (socketInstance) {
         socketInstance.disconnect();
         socketInstance = null;
+        connectionCount = 0;
       }
       return;
     }
 
-    // Initialize socket connection
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
+    connectionCount++;
 
-    socketInstance = socket;
+    if (!socketInstance) {
+      // Initialize singleton socket connection
+      const socket = io(SOCKET_URL, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      });
 
-    socket.on('connect', () => {
-      console.log('⚡ Socket.IO connected:', socket.id);
-      // Join currently active room if any
-      const currentActive = useRoomStore.getState().activeRoomId;
-      if (currentActive) {
-        socket.emit('join_room', { roomId: currentActive });
-      }
-    });
+      socketInstance = socket;
 
-    socket.on('disconnect', (reason) => {
-      console.log('🔌 Socket.IO disconnected:', reason);
-    });
+      socket.on('connect', () => {
+        console.log('⚡ Socket.IO connected:', socket.id);
+        const currentActive = useRoomStore.getState().activeRoomId;
+        if (currentActive) {
+          socket.emit('join_room', { roomId: currentActive });
+        }
+      });
 
-    socket.on('connect_error', (err) => {
-      console.error('⚠️ Socket.IO connection error:', err.message);
-    });
+      socket.on('disconnect', (reason) => {
+        console.log('🔌 Socket.IO disconnected:', reason);
+      });
 
-    // 1. Online presence
-    socket.on('online_users', (onlineUserIds) => {
-      useRoomStore.getState().setOnlineUsers(onlineUserIds);
-    });
+      socket.on('connect_error', (err) => {
+        console.error('⚠️ Socket.IO connection error:', err.message);
+      });
 
-    socket.on('user_status', ({ userId, isOnline }) => {
-      useRoomStore.getState().setUserOnline(userId, isOnline);
-    });
+      // 1. Online presence
+      socket.on('online_users', (onlineUserIds) => {
+        useRoomStore.getState().setOnlineUsers(onlineUserIds);
+      });
 
-    // 2. Real-time message arrival
-    socket.on('new_message', ({ message }) => {
-      if (!message) return;
-      // Append to message store immediately
-      useMessageStore.getState().addMessage(message.roomId, message);
-      // Update sidebar snippet
-      useRoomStore.getState().updateLastMessage(message.roomId, message.content);
-    });
+      socket.on('user_status', ({ userId, isOnline }) => {
+        useRoomStore.getState().setUserOnline(userId, isOnline);
+      });
 
-    // 3. Real-time conversation updates (new chats, unread badges, instant room push)
-    socket.on('conversation_updated', ({ room, message }) => {
-      if (!room) return;
-      useRoomStore.getState().handleConversationUpdated({ room, message });
-    });
+      // 2. Real-time message arrival
+      socket.on('new_message', ({ message }) => {
+        if (!message) return;
+        useMessageStore.getState().addMessage(message.roomId, message);
+        useRoomStore.getState().updateLastMessage(message.roomId, message.content);
 
-    // 4. Typing indicators
-    socket.on('user_typing', ({ roomId, userId, username }) => {
-      useMessageStore.getState().setTyping(roomId, userId, username);
-    });
+        if (message.senderId !== user.id) {
+          sound.playReceived();
+        }
+      });
 
-    socket.on('user_stop_typing', ({ roomId, userId }) => {
-      useMessageStore.getState().clearTyping(roomId, userId);
-    });
+      // 3. Real-time conversation updates
+      socket.on('conversation_updated', ({ room, message }) => {
+        if (!room) return;
+        useRoomStore.getState().handleConversationUpdated({ room, message });
+      });
+
+      // 4. Typing indicators
+      socket.on('user_typing', ({ roomId, userId, username }) => {
+        useMessageStore.getState().setTyping(roomId, userId, username);
+      });
+
+      socket.on('user_stop_typing', ({ roomId, userId }) => {
+        useMessageStore.getState().clearTyping(roomId, userId);
+      });
+    }
 
     return () => {
-      socket.disconnect();
-      socketInstance = null;
+      connectionCount--;
+      if (connectionCount <= 0) {
+        if (socketInstance) {
+          socketInstance.disconnect();
+          socketInstance = null;
+        }
+        connectionCount = 0;
+      }
     };
   }, [token, user]);
 
