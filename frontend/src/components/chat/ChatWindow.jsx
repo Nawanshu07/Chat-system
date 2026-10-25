@@ -247,23 +247,19 @@ export default function ChatWindow({ onBack }) {
           </div>
         </div>
 
-        {/* Header Action Icons matching Design.md */}
+        {/* Header Action Icons matching Telegram */}
         <div className="flex items-center gap-0.5">
-          {/* Group Info Icon */}
-          {!room.isDM && (
-            <button
-              onClick={() => setIsGroupInfoOpen(true)}
-              className="icon"
-              title="Group info"
-              aria-label="Group info"
-            >
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-            </button>
-          )}
+          {/* Search in chat */}
+          <button
+            className="icon"
+            title="Search in chat"
+            aria-label="Search in chat"
+          >
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
 
           {/* Sound Toggle */}
           <button
@@ -284,6 +280,20 @@ export default function ChatWindow({ onBack }) {
                 <line x1="17" y1="9" x2="23" y2="15" />
               </svg>
             )}
+          </button>
+
+          {/* More options / Info */}
+          <button
+            onClick={() => !room.isDM && setIsGroupInfoOpen(true)}
+            className="icon"
+            title={!room.isDM ? 'Group info' : 'More options'}
+            aria-label="More options"
+          >
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="19" r="1.5" />
+            </svg>
           </button>
         </div>
       </header>

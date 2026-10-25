@@ -108,35 +108,36 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Message Bubble matching .m.in and .m.out in Design.md */}
+        {/* Message Bubble matching Telegram */}
         <div
           className={`
             m ${isMine ? 'out' : 'in'}
-            text-[15px] leading-[1.4] break-words transition-colors
+            text-[14.5px] leading-[1.42] break-words transition-colors relative
             ${
               isMine
-                ? 'bg-out text-out-text rounded-br-[4px]'
-                : 'bg-in text-text rounded-bl-[4px] border border-line/40'
+                ? 'bg-out text-out-text rounded-[16px] rounded-br-[4px]'
+                : 'bg-in text-text rounded-[16px] rounded-bl-[4px] border border-line/30'
             }
           `}
         >
           <span className="whitespace-pre-wrap">{message.content}</span>
 
-          <small
-            className={`block text-[11px] mt-1 select-none text-right ${
-              isMine ? 'opacity-70 text-out-text' : 'text-muted opacity-80'
+          {/* Telegram style floating inline timestamp & checkmarks */}
+          <span
+            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] font-medium leading-none ${
+              isMine ? 'text-[var(--out-meta)]' : 'text-muted'
             }`}
           >
-            {formatTime(message.createdAt)}
+            <span>{formatTime(message.createdAt)}</span>
             {isMine && (
               <span
-                className="ml-1 tracking-tighter"
+                className="tracking-tighter font-semibold text-[11.5px]"
                 title={isDelivered ? 'Delivered' : 'Sent'}
               >
                 {isDelivered ? '✓✓' : '✓'}
               </span>
             )}
-          </small>
+          </span>
         </div>
 
         {/* Attached Reactions */}
