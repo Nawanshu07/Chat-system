@@ -429,6 +429,7 @@
 .msgs {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
@@ -471,12 +472,14 @@
 }
 .m.in {
   align-self: flex-start;
+  margin-right: auto;
   background: var(--in);
   color: var(--text);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 .m.out {
   align-self: flex-end;
+  margin-left: auto;
   background: var(--out);
   color: var(--out-text);
 }

@@ -79,7 +79,7 @@ export default function MessageBubble({
         </span>
       )}
 
-      <div className="relative">
+      <div className={`relative flex flex-col ${isMine ? 'items-end' : 'items-start'} w-fit`}>
         {/* Floating Action Bar on Hover — docked horizontally beside the bubble */}
         {showActions && (
           <div
@@ -125,7 +125,7 @@ export default function MessageBubble({
         {/* Message Bubble matching Telegram */}
         <div
           className={`
-            m ${isMine ? 'out' : 'in'}
+            m ${isMine ? 'out ml-auto' : 'in mr-auto'}
             ${getRadius()}
             text-[14.5px] leading-[1.38] break-words transition-colors relative
             ${
