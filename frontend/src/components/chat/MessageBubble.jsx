@@ -120,24 +120,24 @@ export default function MessageBubble({
             }
           `}
         >
-          <span className="whitespace-pre-wrap">{message.content}</span>
-
-          {/* Telegram style floating inline timestamp & checkmarks */}
-          <span
-            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] font-medium leading-none ${
-              isMine ? 'text-[var(--out-meta)]' : 'text-muted'
-            }`}
-          >
-            <span>{formatTime(message.createdAt)}</span>
-            {isMine && (
-              <span
-                className="tracking-tighter font-semibold text-[11.5px]"
-                title={isDelivered ? 'Delivered' : 'Sent'}
-              >
-                {isDelivered ? '✓✓' : '✓'}
-              </span>
-            )}
-          </span>
+          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+            <span className="whitespace-pre-wrap select-text">{message.content}</span>
+            <span
+              className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 ${
+                isMine ? 'text-[var(--out-meta)]' : 'text-muted'
+              }`}
+            >
+              <span>{formatTime(message.createdAt)}</span>
+              {isMine && (
+                <span
+                  className="tracking-tighter font-semibold text-[11px]"
+                  title={isDelivered ? 'Delivered' : 'Sent'}
+                >
+                  {isDelivered ? '✓✓' : '✓'}
+                </span>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Attached Reactions */}

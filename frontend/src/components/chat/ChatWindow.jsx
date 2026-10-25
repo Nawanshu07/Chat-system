@@ -289,16 +289,16 @@ export default function ChatWindow({ onBack }) {
             title={!room.isDM ? 'Group info' : 'More options'}
             aria-label="More options"
           >
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="5" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="19" r="1.5" />
+            <svg viewBox="0 0 24 24" className="w-5 h-5 dots">
+              <circle cx="12" cy="5" r="2" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="19" r="2" fill="currentColor" stroke="none" />
             </svg>
           </button>
         </div>
       </header>
 
-      {/* Message List matching .msgs in Design.md */}
+      {/* Message List matching Telegram */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
@@ -306,59 +306,61 @@ export default function ChatWindow({ onBack }) {
         aria-live="polite"
         className="msgs select-text"
       >
-        {isLoading && messages.length === 0 ? (
-          <div className="m-auto flex items-center gap-2 text-muted text-sm py-12">
-            <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-            Loading messages...
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="m-auto flex flex-col items-center max-w-sm text-center py-12 animate-fade-in">
-            <Avatar name={room.name} letter={room.avatar} size="lg" color={room.avatarColor} />
-            <h3 className="text-base font-semibold text-text mt-3 mb-1">
-              {room.name}
-            </h3>
-            <p className="text-xs text-muted mb-4">
-              Send a message to start the conversation.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-2">
-              {STARTER_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSend(prompt)}
-                  className="px-3 py-1.5 bg-panel hover:bg-hover border border-line rounded-full text-xs text-text font-medium transition-all hover:scale-105 active:scale-95 shadow-2xs"
-                >
-                  {prompt}
-                </button>
-              ))}
+        <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-end">
+          {isLoading && messages.length === 0 ? (
+            <div className="m-auto flex items-center gap-2 text-muted text-sm py-12">
+              <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              Loading messages...
             </div>
-          </div>
-        ) : (
-          groupedItems.map((item) => {
-            if (item.type === 'divider') {
+          ) : messages.length === 0 ? (
+            <div className="m-auto flex flex-col items-center max-w-sm text-center py-12 animate-fade-in">
+              <Avatar name={room.name} letter={room.avatar} size="lg" color={room.avatarColor} />
+              <h3 className="text-base font-semibold text-text mt-3 mb-1">
+                {room.name}
+              </h3>
+              <p className="text-xs text-muted mb-4">
+                Send a message to start the conversation.
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-2">
+                {STARTER_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    className="px-3 py-1.5 bg-panel hover:bg-hover border border-line rounded-full text-xs text-text font-medium transition-all hover:scale-105 active:scale-95 shadow-2xs"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            groupedItems.map((item) => {
+              if (item.type === 'divider') {
+                return (
+                  <div key={item.key} className="day select-none">
+                    {formatDividerDate(item.date)}
+                  </div>
+                );
+              }
+
               return (
-                <div key={item.key} className="day select-none">
-                  {formatDividerDate(item.date)}
-                </div>
+                <MessageBubble
+                  key={item.key}
+                  message={item.message}
+                  isMine={item.message.senderId === myId}
+                  groupPosition={item.groupPosition}
+                  showSender={!room.isDM}
+                  isDelivered={room.isDM ? !!room.isOnline : true}
+                />
               );
-            }
+            })
+          )}
 
-            return (
-              <MessageBubble
-                key={item.key}
-                message={item.message}
-                isMine={item.message.senderId === myId}
-                groupPosition={item.groupPosition}
-                showSender={!room.isDM}
-                isDelivered={room.isDM ? !!room.isOnline : true}
-              />
-            );
-          })
-        )}
+          <TypingIndicator names={typingNames} />
 
-        <TypingIndicator names={typingNames} />
-
-        <div ref={bottomRef} aria-hidden="true" />
+          <div ref={bottomRef} aria-hidden="true" />
+        </div>
       </div>
 
       {/* Floating "New Messages ↓" Pill Button */}
