@@ -334,26 +334,26 @@ export default function Sidebar({ onSelectRoom }) {
                     setModalTab('dm');
                     setGroupError('');
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     modalTab === 'dm'
                       ? 'bg-panel text-text shadow-2xs'
                       : 'text-muted hover:text-text'
                   }`}
                 >
-                  💬 Direct Message
+                  Direct Message
                 </button>
                 <button
                   onClick={() => {
                     setModalTab('group');
                     setGroupError('');
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     modalTab === 'group'
                       ? 'bg-panel text-text shadow-2xs'
                       : 'text-muted hover:text-text'
                   }`}
                 >
-                  👥 Create Group
+                  Create Group
                 </button>
               </div>
 
@@ -453,7 +453,7 @@ export default function Sidebar({ onSelectRoom }) {
                 <div className="flex items-center gap-2.5 mb-3">
                   <Avatar
                     name={groupName || 'New Group'}
-                    letter={groupName ? groupName.charAt(0).toUpperCase() : '👥'}
+                    letter={groupName ? groupName.charAt(0).toUpperCase() : null}
                     size="md"
                     isGroup={true}
                   />

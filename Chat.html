@@ -767,7 +767,7 @@ function handleSend() {
         "Sounds like a plan! Let's get this rolling.",
         "That looks stunning and clean.",
         "Totally agreed! Let me know if you need anything else.",
-        "Got it, appreciate the fast turnaround! ✨"
+        "Got it, appreciate the fast turnaround!"
       ];
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
       addMessage(randomReply, 'theirs');
@@ -788,11 +788,11 @@ soundToggle.addEventListener('click', () => {
     soundIconOn.style.display = 'block';
     soundIconOff.style.display = 'none';
     sound.playSent();
-    showToast('Sound enabled 🔔');
+    showToast('Sound enabled');
   } else {
     soundIconOn.style.display = 'none';
     soundIconOff.style.display = 'block';
-    showToast('Sound muted 🔕');
+    showToast('Sound muted');
   }
 });
 

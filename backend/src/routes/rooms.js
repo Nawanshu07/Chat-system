@@ -11,7 +11,7 @@ export function formatRoomForUser(room, currentUserId) {
   const otherMembers = allUserMembers.filter((u) => u.id !== currentUserId);
 
   let displayName = room.name;
-  let displayAvatar = room.name ? room.name.charAt(0).toUpperCase() : '👥';
+  let displayAvatar = room.name ? room.name.charAt(0).toUpperCase() : 'G';
   let displayColor = 'bg-[#1e4d3b]';
   let isOnline = false;
 

@@ -27,7 +27,7 @@ function formatDividerDate(dateStr) {
   });
 }
 
-const STARTER_PROMPTS = ['👋 Hello!', "How's it going?", 'Are you available today?', 'Nice to meet you!'];
+const STARTER_PROMPTS = ['Hello!', "How's it going?", 'Are you available today?', 'Nice to meet you!'];
 
 export default function ChatWindow({ onBack }) {
   const scrollContainerRef = useRef(null);
