@@ -23,7 +23,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="h-full">
+      <div className="h-full w-full">
         <Routes>
           <Route
             path="/"
