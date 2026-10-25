@@ -431,48 +431,28 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background-color: var(--gutter);
-  padding: 0;
-}
-.chat-column {
-  width: 100%;
-  max-width: 820px;
-  margin: 0 auto;
-  min-height: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 16px 20px;
   background-color: var(--bg);
   background-image: var(--doodle-pattern);
-  background-size: 180px 180px;
-  border-left: 1px solid var(--column-border);
-  border-right: 1px solid var(--column-border);
-  box-shadow: 0 0 24px var(--column-shadow);
-  position: relative;
+  background-size: 240px 240px;
+  background-repeat: repeat;
+  padding: 16px 28px;
 }
-@media (max-width: 900px) {
-  .chat-column {
-    max-width: 100% !important;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    border-left: none !important;
-    border-right: none !important;
-    box-shadow: none !important;
+@media (max-width: 640px) {
+  .msgs {
+    padding: 10px 12px;
   }
 }
 .day {
   align-self: center;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.32);
   color: #FFFFFF;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 3px 12px;
+  padding: 3px 14px;
   border-radius: 12px;
-  margin: 8px 0;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  margin: 10px 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   user-select: none;
 }
 :root[data-theme="light"] .day {
@@ -481,29 +461,22 @@
 }
 .m {
   width: fit-content;
-  max-width: 65%;
-  padding: 8px 12px 6px;
-  border-radius: 16px;
+  max-width: min(520px, 80%);
+  padding: 6px 10px 6px 12px;
   line-height: 1.4;
   word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .m.in {
   align-self: flex-start;
   background: var(--in);
   color: var(--text);
-  border-bottom-left-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 .m.out {
   align-self: flex-end;
   background: var(--out);
   color: var(--out-text);
-  border-bottom-right-radius: 4px;
-}
-@media (max-width: 900px) {
-  .m {
-    max-width: 80% !important;
-  }
 }
 .m small {
   display: block;

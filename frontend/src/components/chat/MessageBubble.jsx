@@ -48,11 +48,25 @@ export default function MessageBubble({
   const isFirst = groupPosition === 'top' || groupPosition === 'single';
   const isLast = groupPosition === 'bottom' || groupPosition === 'single';
 
+  const getRadius = () => {
+    if (isMine) {
+      if (isFirst && isLast) return 'rounded-[14px] rounded-br-[4px]';
+      if (isFirst) return 'rounded-[14px] rounded-br-[4px]';
+      if (isLast) return 'rounded-[14px] rounded-tr-[4px] rounded-br-[4px]';
+      return 'rounded-[14px] rounded-r-[4px]';
+    } else {
+      if (isFirst && isLast) return 'rounded-[14px] rounded-bl-[4px]';
+      if (isFirst) return 'rounded-[14px] rounded-bl-[4px]';
+      if (isLast) return 'rounded-[14px] rounded-tl-[4px] rounded-bl-[4px]';
+      return 'rounded-[14px] rounded-l-[4px]';
+    }
+  };
+
   return (
     <div
-      className={`group relative flex flex-col ${isMine ? 'self-end items-end' : 'self-start items-start'} ${
-        isFirst ? 'mt-2.5' : 'mt-[2px]'
-      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text w-fit max-w-[80%] min-[900px]:max-w-[65%]`}
+      className={`group relative flex flex-col ${isMine ? 'items-end' : 'items-start'} ${
+        isFirst ? 'mt-2' : 'mt-1'
+      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text max-w-[min(540px,78%)]`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -66,7 +80,7 @@ export default function MessageBubble({
         </span>
       )}
 
-      <div className="relative w-fit">
+      <div className="relative">
         {/* Floating Action Bar on Hover — docked horizontally beside the bubble */}
         {showActions && (
           <div
@@ -113,33 +127,32 @@ export default function MessageBubble({
         <div
           className={`
             m ${isMine ? 'out' : 'in'}
-            text-[14.5px] leading-[1.42] break-words transition-colors relative w-fit
+            ${getRadius()}
+            text-[14.5px] leading-[1.38] break-words transition-colors relative min-w-[68px]
             ${
               isMine
-                ? 'bg-out text-out-text rounded-[16px] rounded-br-[4px]'
-                : 'bg-in text-text rounded-[16px] rounded-bl-[4px] border border-line/30'
+                ? 'bg-out text-out-text'
+                : 'bg-in text-text border border-line/30'
             }
           `}
         >
-          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
-            <span className="whitespace-pre-wrap select-text">{message.content}</span>
-            {isLast && (
-              <span
-                className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 ${
-                  isMine ? 'text-[var(--out-meta)]' : 'text-muted'
-                }`}
-              >
-                <span>{formatTime(message.createdAt)}</span>
-                {isMine && (
-                  <span
-                    className="tracking-tighter font-semibold text-[11px]"
-                    title={isDelivered ? 'Delivered' : 'Sent'}
-                  >
-                    {isDelivered ? '✓✓' : '✓'}
-                  </span>
-                )}
-              </span>
-            )}
+          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-0.5">
+            <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
+            <span
+              className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 pl-1 pb-0.5 ${
+                isMine ? 'text-[var(--out-meta)]' : 'text-muted'
+              }`}
+            >
+              <span>{formatTime(message.createdAt)}</span>
+              {isMine && (
+                <span
+                  className="tracking-tighter font-semibold text-[11px]"
+                  title={isDelivered ? 'Delivered' : 'Sent'}
+                >
+                  {isDelivered ? '✓✓' : '✓'}
+                </span>
+              )}
+            </span>
           </div>
         </div>
 

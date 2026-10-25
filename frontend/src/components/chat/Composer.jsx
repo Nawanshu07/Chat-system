@@ -101,7 +101,7 @@ export default function Composer({ onSend, onTyping }) {
       )}
 
       {/* Main Telegram Composer Row */}
-      <div className="comp max-w-3xl mx-auto w-full">
+      <div className="comp w-full">
         {/* Attachment Paperclip Button */}
         <button
           type="button"
