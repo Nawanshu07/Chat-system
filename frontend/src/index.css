@@ -460,8 +460,9 @@
   color: #FFFFFF;
 }
 .m {
+  display: flow-root;
   width: fit-content;
-  max-width: min(520px, 80%);
+  max-width: min(540px, 80%);
   padding: 6px 10px 6px 12px;
   line-height: 1.4;
   word-wrap: break-word;

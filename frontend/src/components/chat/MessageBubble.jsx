@@ -64,7 +64,7 @@ export default function MessageBubble({
 
   return (
     <div
-      className={`group relative flex flex-col ${isMine ? 'items-end' : 'items-start'} ${
+      className={`group relative flex flex-col ${isMine ? 'self-end items-end' : 'self-start items-start'} ${
         isFirst ? 'mt-2' : 'mt-1'
       } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text max-w-[min(540px,78%)]`}
       onMouseEnter={() => setShowActions(true)}
@@ -128,7 +128,7 @@ export default function MessageBubble({
           className={`
             m ${isMine ? 'out' : 'in'}
             ${getRadius()}
-            text-[14.5px] leading-[1.38] break-words transition-colors relative min-w-[68px]
+            text-[14.5px] leading-[1.38] break-words transition-colors relative
             ${
               isMine
                 ? 'bg-out text-out-text'
@@ -136,24 +136,22 @@ export default function MessageBubble({
             }
           `}
         >
-          <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-0.5">
-            <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
-            <span
-              className={`inline-flex items-center gap-1 ml-auto text-[11px] font-medium leading-none select-none flex-shrink-0 pl-1 pb-0.5 ${
-                isMine ? 'text-[var(--out-meta)]' : 'text-muted'
-              }`}
-            >
-              <span>{formatTime(message.createdAt)}</span>
-              {isMine && (
-                <span
-                  className="tracking-tighter font-semibold text-[11px]"
-                  title={isDelivered ? 'Delivered' : 'Sent'}
-                >
-                  {isDelivered ? '✓✓' : '✓'}
-                </span>
-              )}
-            </span>
-          </div>
+          <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
+          <span
+            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 text-[11px] font-medium leading-none select-none ${
+              isMine ? 'text-[var(--out-meta)]' : 'text-muted'
+            }`}
+          >
+            <span>{formatTime(message.createdAt)}</span>
+            {isMine && (
+              <span
+                className="tracking-tighter font-semibold text-[11px]"
+                title={isDelivered ? 'Delivered' : 'Sent'}
+              >
+                {isDelivered ? '✓✓' : '✓'}
+              </span>
+            )}
+          </span>
         </div>
 
         {/* Attached Reactions */}
