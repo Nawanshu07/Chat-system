@@ -94,15 +94,6 @@ export function useSocket() {
         // Auto-join socket room for newly created or active rooms
         socket.emit('join_room', { roomId: room.id });
       });
-
-      // 4. Typing indicators
-      socket.on('user_typing', ({ roomId, userId, username }) => {
-        useMessageStore.getState().setTyping(roomId, userId, username);
-      });
-
-      socket.on('user_stop_typing', ({ roomId, userId }) => {
-        useMessageStore.getState().clearTyping(roomId, userId);
-      });
     }
 
     return () => {
@@ -152,22 +143,8 @@ export function useSocket() {
     });
   };
 
-  const startTyping = (roomId) => {
-    if (socketInstance?.connected && roomId) {
-      socketInstance.emit('typing_start', { roomId });
-    }
-  };
-
-  const stopTyping = (roomId) => {
-    if (socketInstance?.connected && roomId) {
-      socketInstance.emit('typing_stop', { roomId });
-    }
-  };
-
   return {
     socket: socketInstance,
     sendRealtimeMessage,
-    startTyping,
-    stopTyping,
   };
 }

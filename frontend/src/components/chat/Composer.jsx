@@ -10,7 +10,7 @@ const EMOJI_PALETTE = [
   '😎', '🙌', '🤝', '💡', '👀', '⚡',
 ];
 
-export default function Composer({ onSend, onTyping }) {
+export default function Composer({ onSend }) {
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachment, setAttachment] = useState(null);
@@ -95,7 +95,6 @@ export default function Composer({ onSend, onTyping }) {
   const handleChange = (e) => {
     if (e.target.value.length <= MAX_LENGTH) {
       setText(e.target.value);
-      onTyping?.();
     }
   };
 

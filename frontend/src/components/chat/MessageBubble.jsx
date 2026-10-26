@@ -15,7 +15,6 @@ export default function MessageBubble({
   isMine,
   groupPosition = 'single',
   showSender = false,
-  isDelivered = false,
   onReaction,
 }) {
   const [showActions, setShowActions] = useState(false);
@@ -49,133 +48,129 @@ export default function MessageBubble({
 
   const getRadius = () => {
     if (isMine) {
-      if (isFirst && isLast) return 'rounded-[14px] rounded-br-[4px]';
-      if (isFirst) return 'rounded-[14px] rounded-br-[4px]';
-      if (isLast) return 'rounded-[14px] rounded-tr-[4px] rounded-br-[4px]';
-      return 'rounded-[14px] rounded-r-[4px]';
+      if (isFirst && isLast) return 'rounded-[16px] rounded-br-[4px]';
+      if (isFirst) return 'rounded-[16px] rounded-br-[4px]';
+      if (isLast) return 'rounded-[16px] rounded-tr-[4px] rounded-br-[4px]';
+      return 'rounded-[16px] rounded-r-[4px]';
     } else {
-      if (isFirst && isLast) return 'rounded-[14px] rounded-bl-[4px]';
-      if (isFirst) return 'rounded-[14px] rounded-bl-[4px]';
-      if (isLast) return 'rounded-[14px] rounded-tl-[4px] rounded-bl-[4px]';
-      return 'rounded-[14px] rounded-l-[4px]';
+      if (isFirst && isLast) return 'rounded-[16px] rounded-bl-[4px]';
+      if (isFirst) return 'rounded-[16px] rounded-bl-[4px]';
+      if (isLast) return 'rounded-[16px] rounded-tl-[4px] rounded-bl-[4px]';
+      return 'rounded-[16px] rounded-l-[4px]';
     }
   };
 
   return (
     <div
-      className={`group relative flex flex-col ${isMine ? 'self-end items-end' : 'self-start items-start'} ${
+      className={`w-full flex ${isMine ? 'justify-end' : 'justify-start'} ${
         isFirst ? 'mt-2' : 'mt-1'
-      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text max-w-[min(540px,78%)] cursor-pointer sm:cursor-default`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-      onClick={(e) => {
-        if (e.target.closest('button')) return;
-        setShowActions((prev) => !prev);
-      }}
+      } ${hasReactions ? 'mb-2.5' : ''}`}
     >
-      {/* Sender name for group chats */}
-      {!isMine && showSender && isFirst && (
-        <span
-          className="text-[11px] font-semibold mb-0.5 pl-1 select-none"
-          style={{ color: message.senderColor || '#3B82F6' }}
-        >
-          {message.senderName || 'Member'}
-        </span>
-      )}
+      <div
+        className={`group relative flex flex-col ${isMine ? 'items-end' : 'items-start'} animate-spring-up select-text max-w-[min(540px,78%)] cursor-pointer sm:cursor-default`}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+        onClick={(e) => {
+          if (e.target.closest('button')) return;
+          setShowActions((prev) => !prev);
+        }}
+      >
+        {/* Sender name for group chats */}
+        {!isMine && showSender && isFirst && (
+          <span
+            className="text-[11px] font-semibold mb-0.5 pl-1 select-none"
+            style={{ color: message.senderColor || '#3B82F6' }}
+          >
+            {message.senderName || 'Member'}
+          </span>
+        )}
 
-      <div className={`relative flex flex-col ${isMine ? 'items-end' : 'items-start'} w-fit`}>
-        {/* Floating Action Bar — docked beside bubble on desktop, above on mobile */}
-        {showActions && (
+        <div className={`relative flex flex-col ${isMine ? 'items-end' : 'items-start'} w-fit`}>
+          {/* Floating Action Bar — docked beside bubble on desktop, above on mobile */}
+          {showActions && (
+            <div
+              className={`
+                absolute z-30 flex items-center gap-1
+                bg-panel border border-line rounded-full px-2 py-1 shadow-lg backdrop-blur-md
+                animate-pop-in select-none
+                ${
+                  isMine
+                    ? 'sm:top-1/2 sm:-translate-y-1/2 sm:right-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:right-0 max-sm:top-auto before:-right-2.5'
+                    : 'sm:top-1/2 sm:-translate-y-1/2 sm:left-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:left-0 max-sm:top-auto before:-left-2.5'
+                }
+                before:content-[''] before:absolute before:inset-y-0 before:w-3
+              `}
+            >
+              {QUICK_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleToggleReaction(emoji)}
+                  className="hover:scale-130 active:scale-95 transition-transform p-0.5 text-xs leading-none"
+                  title={`React ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+              <div className="w-[1px] h-3.5 bg-line mx-0.5" />
+              <button
+                onClick={handleCopy}
+                className="text-muted hover:text-text p-0.5 text-xs font-semibold transition-colors flex items-center justify-center"
+                title="Copy text"
+              >
+                {copied ? (
+                  <span className="text-online text-[10px] font-bold">Copied</span>
+                ) : (
+                  <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Message Bubble matching Telegram */}
           <div
             className={`
-              absolute z-30 flex items-center gap-1
-              bg-panel border border-line rounded-full px-2 py-1 shadow-lg backdrop-blur-md
-              animate-pop-in select-none
+              m ${isMine ? 'out ml-auto' : 'in mr-auto'}
+              ${getRadius()}
+              text-[14.5px] leading-[1.38] break-words transition-colors relative
               ${
                 isMine
-                  ? 'sm:top-1/2 sm:-translate-y-1/2 sm:right-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:right-0 max-sm:top-auto before:-right-2.5'
-                  : 'sm:top-1/2 sm:-translate-y-1/2 sm:left-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:left-0 max-sm:top-auto before:-left-2.5'
+                  ? 'bg-out text-out-text'
+                  : 'bg-in text-text border border-line/30'
               }
-              before:content-[''] before:absolute before:inset-y-0 before:w-3
             `}
           >
-            {QUICK_REACTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleToggleReaction(emoji)}
-                className="hover:scale-130 active:scale-95 transition-transform p-0.5 text-xs leading-none"
-                title={`React ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
-            <div className="w-[1px] h-3.5 bg-line mx-0.5" />
-            <button
-              onClick={handleCopy}
-              className="text-muted hover:text-text p-0.5 text-xs font-semibold transition-colors flex items-center justify-center"
-              title="Copy text"
+            <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
+            <span
+              className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 text-[11px] font-medium leading-none select-none whitespace-nowrap flex-nowrap ${
+                isMine ? 'text-[var(--out-meta)]' : 'text-muted'
+              }`}
             >
-              {copied ? (
-                <span className="text-online text-[10px] font-bold">✓</span>
-              ) : (
-                <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="1.8">
-                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              )}
-            </button>
+              <span>{formatTime(message.createdAt)}</span>
+            </span>
           </div>
-        )}
 
-        {/* Message Bubble matching Telegram */}
-        <div
-          className={`
-            m ${isMine ? 'out ml-auto' : 'in mr-auto'}
-            ${getRadius()}
-            text-[14.5px] leading-[1.38] break-words transition-colors relative
-            ${
-              isMine
-                ? 'bg-out text-out-text'
-                : 'bg-in text-text border border-line/30'
-            }
-          `}
-        >
-          <span className="whitespace-pre-wrap select-text break-words">{message.content}</span>
-          <span
-            className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 text-[11px] font-medium leading-none select-none whitespace-nowrap flex-nowrap ${
-              isMine ? 'text-[var(--out-meta)]' : 'text-muted'
-            }`}
-          >
-            <span>{formatTime(message.createdAt)}</span>
-            {isMine && (
-              <span
-                className="tracking-tighter font-semibold text-[11px]"
-                title={isDelivered ? 'Delivered' : 'Sent'}
-              >
-                {isDelivered ? '✓✓' : '✓'}
-              </span>
-            )}
-          </span>
+          {/* Attached Reactions */}
+          {hasReactions && (
+            <div
+              className={`flex flex-wrap gap-1 mt-1 absolute -bottom-3 ${
+                isMine ? 'right-2' : 'left-2'
+              } z-10`}
+            >
+              {Object.entries(reactions).map(([emoji, count]) => (
+                <span
+                  key={emoji}
+                  onClick={() => handleToggleReaction(emoji)}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-panel border border-line rounded-full text-xs shadow-sm cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                >
+                  <span>{emoji}</span>
+                  {count > 1 && <span className="text-[10px] text-muted font-bold">{count}</span>}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Attached Reactions */}
-        {hasReactions && (
-          <div
-            className={`flex flex-wrap gap-1 mt-1 absolute -bottom-3 ${
-              isMine ? 'right-2' : 'left-2'
-            } z-10`}
-          >
-            {Object.entries(reactions).map(([emoji, count]) => (
-              <span
-                key={emoji}
-                onClick={() => handleToggleReaction(emoji)}
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-panel border border-line rounded-full text-xs shadow-sm cursor-pointer hover:scale-110 active:scale-95 transition-transform"
-              >
-                <span>{emoji}</span>
-                {count > 1 && <span className="text-[10px] text-muted font-bold">{count}</span>}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

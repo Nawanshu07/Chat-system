@@ -36,9 +36,6 @@ function formatTimestamp(timeStr) {
 }
 
 export default function RoomItem({ room, isActive, onClick, myId }) {
-  const typingMap = useMessageStore((s) => s.typingUsers[room.id]);
-  const typingNames = typingMap ? Object.values(typingMap) : [];
-  const isSomeoneTyping = typingNames.length > 0;
   const isLastMsgMine = room.lastMessageSenderId === myId;
 
   return (
@@ -69,26 +66,20 @@ export default function RoomItem({ room, isActive, onClick, myId }) {
         </span>
 
         <span className="row">
-          {isSomeoneTyping ? (
-            <span className="prev text-accent italic font-medium">
-              {typingNames[0]} is typing…
-            </span>
-          ) : (
-            <span className="prev">
-              {room.lastMessage ? (
-                <>
-                  {isLastMsgMine
-                    ? 'You: '
-                    : !room.isDM && room.lastMessageSenderName
-                    ? `${room.lastMessageSenderName}: `
-                    : ''}
-                  {room.lastMessage}
-                </>
-              ) : (
-                'No messages yet'
-              )}
-            </span>
-          )}
+          <span className="prev">
+            {room.lastMessage ? (
+              <>
+                {isLastMsgMine
+                  ? 'You: '
+                  : !room.isDM && room.lastMessageSenderName
+                  ? `${room.lastMessageSenderName}: `
+                  : ''}
+                {room.lastMessage}
+              </>
+            ) : (
+              'No messages yet'
+            )}
+          </span>
 
           {room.unread > 0 && (
             <span className="badge">

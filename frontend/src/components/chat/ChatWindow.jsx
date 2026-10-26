@@ -6,7 +6,6 @@ import { useSocket } from '../../hooks/useSocket';
 import { sound } from '../../services/sound';
 import Avatar from '../shared/Avatar';
 import MessageBubble from './MessageBubble';
-import TypingIndicator from './TypingIndicator';
 import Composer from './Composer';
 import GroupInfoModal from './GroupInfoModal';
 import ContactInfoModal from './ContactInfoModal';
@@ -56,14 +55,12 @@ export default function ChatWindow({ onBack }) {
   const getMessages = useMessageStore((s) => s.getMessages);
   const fetchMessages = useMessageStore((s) => s.fetchMessages);
   const loadingRooms = useMessageStore((s) => s.loadingRooms);
-  const getTypingUsers = useMessageStore((s) => s.getTypingUsers);
   const clearRoomMessages = useMessageStore((s) => s.clearRoomMessages);
 
-  const { sendRealtimeMessage, startTyping, stopTyping } = useSocket();
+  const { sendRealtimeMessage } = useSocket();
 
   const room = rooms.find((r) => r.id === activeRoomId) || null;
   const rawMessages = room ? getMessages(room.id) : [];
-  const typingNames = room ? getTypingUsers(room.id) : [];
   const isLoading = room ? !!loadingRooms[room.id] : false;
 
   // Filter messages if search query is active
@@ -159,11 +156,6 @@ export default function ChatWindow({ onBack }) {
     } catch (err) {
       console.error('Failed to send:', err);
     }
-  };
-
-  const handleTyping = () => {
-    if (!room?.id) return;
-    startTyping(room.id);
   };
 
   const handleClearChat = () => {
@@ -285,11 +277,7 @@ export default function ChatWindow({ onBack }) {
             )}
           </div>
           <div className="s">
-            {typingNames.length > 0 ? (
-              <span className="text-accent italic font-medium">
-                {typingNames[0]} is typing…
-              </span>
-            ) : !room.isDM ? (
+            {!room.isDM ? (
               <span>
                 {room.members?.length || 0} members
                 {onlineCount > 0 ? ` · ${onlineCount} online` : ''}
@@ -508,24 +496,25 @@ export default function ChatWindow({ onBack }) {
                 );
               }
 
+              const isMine = item.message.senderId === myId;
+
               return (
                 <div
                   key={item.key}
-                  className={item.isSearchMatch ? 'ring-2 ring-accent/60 rounded-2xl' : ''}
+                  className={`w-full flex ${isMine ? 'justify-end' : 'justify-start'} ${
+                    item.isSearchMatch ? 'ring-2 ring-accent/60 rounded-2xl' : ''
+                  }`}
                 >
                   <MessageBubble
                     message={item.message}
-                    isMine={item.message.senderId === myId}
+                    isMine={isMine}
                     groupPosition={item.groupPosition}
                     showSender={!room.isDM}
-                    isDelivered={room.isDM ? !!room.isOnline : true}
                   />
                 </div>
               );
             })
           )}
-
-          <TypingIndicator names={typingNames} />
 
           <div ref={bottomRef} aria-hidden="true" />
         </div>
@@ -545,7 +534,7 @@ export default function ChatWindow({ onBack }) {
       )}
 
       {/* Composer matching .comp in Design.md */}
-      <Composer onSend={handleSend} onTyping={handleTyping} />
+      <Composer onSend={handleSend} />
 
       {/* Group Info Modal */}
       {isGroupInfoOpen && room && !room.isDM && (
