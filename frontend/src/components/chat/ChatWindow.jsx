@@ -9,6 +9,7 @@ import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import Composer from './Composer';
 import GroupInfoModal from './GroupInfoModal';
+import ContactInfoModal from './ContactInfoModal';
 
 function formatDividerDate(dateStr) {
   if (!dateStr) return '';
@@ -32,12 +33,20 @@ const STARTER_PROMPTS = ['Hello!', "How's it going?", 'Are you available today?'
 export default function ChatWindow({ onBack }) {
   const scrollContainerRef = useRef(null);
   const bottomRef = useRef(null);
-  const typingTimerRef = useRef(null);
+  const menuRef = useRef(null);
 
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
+
+  // Modals & Menu State
   const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+  const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  // In-Chat Search State
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { user } = useAuthStore();
   const activeRoomId = useRoomStore((s) => s.activeRoomId);
@@ -48,13 +57,23 @@ export default function ChatWindow({ onBack }) {
   const fetchMessages = useMessageStore((s) => s.fetchMessages);
   const loadingRooms = useMessageStore((s) => s.loadingRooms);
   const getTypingUsers = useMessageStore((s) => s.getTypingUsers);
+  const clearRoomMessages = useMessageStore((s) => s.clearRoomMessages);
 
   const { sendRealtimeMessage, startTyping, stopTyping } = useSocket();
 
   const room = rooms.find((r) => r.id === activeRoomId) || null;
-  const messages = room ? getMessages(room.id) : [];
+  const rawMessages = room ? getMessages(room.id) : [];
   const typingNames = room ? getTypingUsers(room.id) : [];
   const isLoading = room ? !!loadingRooms[room.id] : false;
+
+  // Filter messages if search query is active
+  const searchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return rawMessages.filter((m) => m.content?.toLowerCase().includes(q));
+  }, [rawMessages, searchQuery]);
+
+  const messages = rawMessages;
 
   const onlineCount = useMemo(() => {
     if (!room?.members) return 0;
@@ -67,13 +86,32 @@ export default function ChatWindow({ onBack }) {
     const next = !soundEnabled;
     sound.setEnabled(next);
     setSoundEnabled(next);
+    if (next) sound.playTap();
   };
+
+  // Close header menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (room?.id) {
       markRead(room.id);
       fetchMessages(room.id);
       setNewMessagesCount(0);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+      setShowMenu(false);
     }
   }, [room?.id, markRead, fetchMessages]);
 
@@ -99,84 +137,100 @@ export default function ChatWindow({ onBack }) {
     prevMsgCountRef.current = messages.length;
 
     if (isNewArrival) {
-      const lastMsg = messages[messages.length - 1];
-      const isMyMsg = lastMsg?.senderId === myId;
-
-      if (!isScrolledUp || isMyMsg) {
-        scrollToBottom(true);
-      } else {
+      if (isScrolledUp) {
         setNewMessagesCount((c) => c + 1);
+      } else {
+        scrollToBottom(true);
       }
     }
-  }, [messages.length, isScrolledUp, myId]);
+  }, [messages.length, isScrolledUp]);
 
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      scrollToBottom(false);
+    }
+  }, [room?.id]);
+
+  const handleSend = async (content) => {
+    if (!room?.id || !content.trim()) return;
+    try {
+      await sendRealtimeMessage(room.id, content.trim());
+      scrollToBottom(true);
+    } catch (err) {
+      console.error('Failed to send:', err);
+    }
+  };
+
+  const handleTyping = () => {
+    if (!room?.id) return;
+    startTyping(room.id);
+  };
+
+  const handleClearChat = () => {
+    if (!room?.id) return;
+    if (window.confirm('Clear all messages in this conversation for this session?')) {
+      clearRoomMessages(room.id);
+      setShowMenu(false);
+      sound.playTap();
+    }
+  };
+
+  const handleOpenInfo = () => {
+    setShowMenu(false);
+    if (!room) return;
+    if (room.isDM) {
+      setIsContactInfoOpen(true);
+    } else {
+      setIsGroupInfoOpen(true);
+    }
+  };
+
+  // Group messages by day & sender
   const groupedItems = useMemo(() => {
     const items = [];
-    let lastDateStr = null;
+    let lastDate = null;
 
-    for (let i = 0; i < messages.length; i++) {
-      const msg = messages[i];
-      const dateStr = new Date(msg.createdAt).toDateString();
+    messages.forEach((msg, idx) => {
+      const msgDate = new Date(msg.createdAt).toDateString();
 
-      if (dateStr !== lastDateStr) {
-        items.push({ type: 'divider', date: msg.createdAt, key: `div-${dateStr}` });
-        lastDateStr = dateStr;
+      if (msgDate !== lastDate) {
+        items.push({
+          type: 'divider',
+          date: msg.createdAt,
+          key: `div-${msg.createdAt}-${idx}`,
+        });
+        lastDate = msgDate;
       }
 
-      const prev = messages[i - 1];
-      const next = messages[i + 1];
+      const prev = messages[idx - 1];
+      const next = messages[idx + 1];
+      const isPrevSame = prev && prev.senderId === msg.senderId && new Date(prev.createdAt).toDateString() === msgDate;
+      const isNextSame = next && next.senderId === msg.senderId && new Date(next.createdAt).toDateString() === msgDate;
 
-      const sameAsPrev =
-        prev &&
-        prev.senderId === msg.senderId &&
-        Math.abs(new Date(msg.createdAt) - new Date(prev.createdAt)) < 120000;
+      let groupPosition = 'single';
+      if (isPrevSame && isNextSame) groupPosition = 'middle';
+      else if (isPrevSame && !isNextSame) groupPosition = 'bottom';
+      else if (!isPrevSame && isNextSame) groupPosition = 'top';
 
-      const sameAsNext =
-        next &&
-        next.senderId === msg.senderId &&
-        Math.abs(new Date(next.createdAt) - new Date(msg.createdAt)) < 120000;
-
-      let position = 'single';
-      if (sameAsPrev && sameAsNext) position = 'middle';
-      else if (sameAsPrev && !sameAsNext) position = 'bottom';
-      else if (!sameAsPrev && sameAsNext) position = 'top';
+      const isSearchMatch = searchQuery.trim()
+        ? msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
+        : false;
 
       items.push({
         type: 'message',
         message: msg,
-        groupPosition: position,
-        key: msg.id,
+        groupPosition,
+        isSearchMatch,
+        key: msg.id || `msg-${idx}`,
       });
-    }
+    });
 
     return items;
-  }, [messages]);
-
-  const handleTyping = () => {
-    if (!room) return;
-    startTyping(room.id);
-    clearTimeout(typingTimerRef.current);
-    typingTimerRef.current = setTimeout(() => {
-      stopTyping(room.id);
-    }, 2000);
-  };
-
-  const handleSend = async (content) => {
-    if (!room) return;
-    clearTimeout(typingTimerRef.current);
-    stopTyping(room.id);
-
-    try {
-      await sendRealtimeMessage(room.id, content);
-      scrollToBottom(true);
-    } catch (err) {
-      console.error('Failed to send real-time message:', err);
-    }
-  };
+  }, [messages, searchQuery]);
 
   if (!room) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-bg text-muted select-none px-6 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center select-none bg-bg">
         <div className="w-16 h-16 flex items-center justify-center mb-3 animate-pop-in">
           <img src="/icon.png" alt="Chatly" className="w-16 h-16 object-contain" />
         </div>
@@ -189,37 +243,38 @@ export default function ChatWindow({ onBack }) {
   return (
     <div className="flex-1 flex flex-col bg-bg min-w-0 min-h-0 relative">
       {/* Header matching .main-h in Design.md */}
-      <header className="main-h">
-        {/* Back button for mobile matching .back in Design.md */}
+      <header className="main-h relative select-none">
+        {/* Back button for mobile */}
         {onBack && (
           <button
             onClick={onBack}
-            className="icon back"
+            className="icon back cursor-pointer hover:bg-hover active:scale-95 transition-transform"
             aria-label="Back to chats"
+            title="Back to chats"
           >
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-current fill-none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
         )}
 
-        {/* 42px Avatar */}
-        <Avatar
-          name={room.name}
-          letter={room.avatar}
-          size="header"
-          isOnline={room.isOnline}
-          isGroup={!room.isDM}
-          color={room.avatarColor}
-        />
+        {/* 42px Avatar - clickable for Info */}
+        <div onClick={handleOpenInfo} className="cursor-pointer hover:opacity-85 transition-opacity flex-shrink-0">
+          <Avatar
+            name={room.name}
+            letter={room.avatar}
+            size="header"
+            isOnline={room.isOnline}
+            isGroup={!room.isDM}
+            color={room.avatarColor}
+          />
+        </div>
 
-        {/* Title and status matching .t, .n, .s in Design.md */}
+        {/* Title and status matching .t, .n, .s in Design.md - clickable for Info */}
         <div
-          className={`t ${!room.isDM ? 'cursor-pointer hover:opacity-85' : ''}`}
-          onClick={() => {
-            if (!room.isDM) setIsGroupInfoOpen(true);
-          }}
-          title={!room.isDM ? 'Click to view group details' : undefined}
+          className="t cursor-pointer hover:opacity-85 transition-opacity"
+          onClick={handleOpenInfo}
+          title={room.isDM ? 'Click to view contact info' : 'Click to view group details'}
         >
           <div className="n flex items-center gap-1.5">
             <span className="truncate">{room.name}</span>
@@ -248,10 +303,14 @@ export default function ChatWindow({ onBack }) {
         </div>
 
         {/* Header Action Icons matching Telegram */}
-        <div className="flex items-center gap-0.5">
-          {/* Search in chat */}
+        <div className="flex items-center gap-0.5 relative" ref={menuRef}>
+          {/* Search in chat toggle */}
           <button
-            className="icon"
+            onClick={() => {
+              setIsSearchOpen((prev) => !prev);
+              if (isSearchOpen) setSearchQuery('');
+            }}
+            className={`icon ${isSearchOpen ? 'text-accent bg-hover' : ''}`}
             title="Search in chat"
             aria-label="Search in chat"
           >
@@ -282,11 +341,11 @@ export default function ChatWindow({ onBack }) {
             )}
           </button>
 
-          {/* More options / Info */}
+          {/* More options / Dropdown Menu Button */}
           <button
-            onClick={() => !room.isDM && setIsGroupInfoOpen(true)}
-            className="icon"
-            title={!room.isDM ? 'Group info' : 'More options'}
+            onClick={() => setShowMenu((prev) => !prev)}
+            className={`icon ${showMenu ? 'bg-hover text-text' : ''}`}
+            title="More options"
             aria-label="More options"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 dots">
@@ -295,8 +354,113 @@ export default function ChatWindow({ onBack }) {
               <circle cx="12" cy="19" r="2" fill="currentColor" stroke="none" />
             </svg>
           </button>
+
+          {/* Floating Dropdown Menu */}
+          {showMenu && (
+            <div className="absolute right-0 top-full mt-1.5 w-48 bg-panel border border-line rounded-xl shadow-xl z-50 py-1.5 animate-pop-in select-none">
+              <button
+                onClick={handleOpenInfo}
+                className="w-full px-3.5 py-2 text-left text-xs font-semibold text-text hover:bg-hover flex items-center gap-2.5 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-muted fill-none stroke-current" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                <span>{room.isDM ? 'View Contact Info' : 'View Group Info'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  setIsSearchOpen(true);
+                }}
+                className="w-full px-3.5 py-2 text-left text-xs font-semibold text-text hover:bg-hover flex items-center gap-2.5 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-muted fill-none stroke-current" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span>Search in Chat</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleToggleSound();
+                  setShowMenu(false);
+                }}
+                className="w-full px-3.5 py-2 text-left text-xs font-semibold text-text hover:bg-hover flex items-center gap-2.5 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-muted fill-none stroke-current" strokeWidth="2">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <span>{soundEnabled ? 'Mute Notifications' : 'Unmute Notifications'}</span>
+              </button>
+
+              <div className="my-1 border-t border-line/60" />
+
+              <button
+                onClick={handleClearChat}
+                className="w-full px-3.5 py-2 text-left text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span>Clear Messages</span>
+              </button>
+
+              {onBack && (
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    onBack();
+                  }}
+                  className="w-full px-3.5 py-2 text-left text-xs font-semibold text-text hover:bg-hover flex items-center gap-2.5 transition-colors sm:hidden"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-muted fill-none stroke-current" strokeWidth="2">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                  <span>Close Chat</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
+
+      {/* In-Chat Message Search Bar */}
+      {isSearchOpen && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-panel border-b border-line animate-fade-in flex-shrink-0 z-10 select-none">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 text-muted flex-none fill-none stroke-current" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search in this chat..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+            className="flex-1 bg-transparent text-text text-sm outline-none placeholder:text-muted"
+          />
+          {searchQuery && (
+            <span className="text-xs text-muted font-medium whitespace-nowrap">
+              {searchMatches.length} {searchMatches.length === 1 ? 'match' : 'matches'}
+            </span>
+          )}
+          <button
+            onClick={() => {
+              setIsSearchOpen(false);
+              setSearchQuery('');
+            }}
+            className="w-7 h-7 rounded-full grid place-items-center text-muted hover:text-text hover:bg-hover text-xs transition-colors"
+            aria-label="Close search"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Message List matching Telegram */}
       <div
@@ -345,14 +509,18 @@ export default function ChatWindow({ onBack }) {
               }
 
               return (
-                <MessageBubble
+                <div
                   key={item.key}
-                  message={item.message}
-                  isMine={item.message.senderId === myId}
-                  groupPosition={item.groupPosition}
-                  showSender={!room.isDM}
-                  isDelivered={room.isDM ? !!room.isOnline : true}
-                />
+                  className={item.isSearchMatch ? 'ring-2 ring-accent/60 rounded-2xl' : ''}
+                >
+                  <MessageBubble
+                    message={item.message}
+                    isMine={item.message.senderId === myId}
+                    groupPosition={item.groupPosition}
+                    showSender={!room.isDM}
+                    isDelivered={room.isDM ? !!room.isOnline : true}
+                  />
+                </div>
               );
             })
           )}
@@ -382,6 +550,11 @@ export default function ChatWindow({ onBack }) {
       {/* Group Info Modal */}
       {isGroupInfoOpen && room && !room.isDM && (
         <GroupInfoModal room={room} onClose={() => setIsGroupInfoOpen(false)} />
+      )}
+
+      {/* Contact Info Modal for DMs */}
+      {isContactInfoOpen && room && room.isDM && (
+        <ContactInfoModal room={room} onClose={() => setIsContactInfoOpen(false)} />
       )}
     </div>
   );

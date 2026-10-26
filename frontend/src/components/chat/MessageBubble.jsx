@@ -65,9 +65,13 @@ export default function MessageBubble({
     <div
       className={`group relative flex flex-col ${isMine ? 'self-end items-end' : 'self-start items-start'} ${
         isFirst ? 'mt-2' : 'mt-1'
-      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text max-w-[min(540px,78%)]`}
+      } ${hasReactions ? 'mb-2.5' : ''} animate-spring-up select-text max-w-[min(540px,78%)] cursor-pointer sm:cursor-default`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onClick={(e) => {
+        if (e.target.closest('button')) return;
+        setShowActions((prev) => !prev);
+      }}
     >
       {/* Sender name for group chats */}
       {!isMine && showSender && isFirst && (
@@ -80,17 +84,17 @@ export default function MessageBubble({
       )}
 
       <div className={`relative flex flex-col ${isMine ? 'items-end' : 'items-start'} w-fit`}>
-        {/* Floating Action Bar on Hover — docked horizontally beside the bubble */}
+        {/* Floating Action Bar — docked beside bubble on desktop, above on mobile */}
         {showActions && (
           <div
             className={`
-              absolute top-1/2 -translate-y-1/2 z-30 flex items-center gap-1
+              absolute z-30 flex items-center gap-1
               bg-panel border border-line rounded-full px-2 py-1 shadow-lg backdrop-blur-md
               animate-pop-in select-none
               ${
                 isMine
-                  ? 'right-[calc(100%+8px)] before:-right-2.5'
-                  : 'left-[calc(100%+8px)] before:-left-2.5'
+                  ? 'sm:top-1/2 sm:-translate-y-1/2 sm:right-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:right-0 max-sm:top-auto before:-right-2.5'
+                  : 'sm:top-1/2 sm:-translate-y-1/2 sm:left-[calc(100%+8px)] max-sm:bottom-full max-sm:mb-1.5 max-sm:left-0 max-sm:top-auto before:-left-2.5'
               }
               before:content-[''] before:absolute before:inset-y-0 before:w-3
             `}

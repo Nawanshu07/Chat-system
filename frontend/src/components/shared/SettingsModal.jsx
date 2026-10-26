@@ -9,7 +9,28 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [isDark, setIsDark] = useState(theme.isDark());
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
 
+  // Handle mobile hardware/gesture back
+  useEffect(() => {
+    if (!isOpen) return;
+    window.history.pushState({ modalOpen: 'settings' }, '');
+    const handlePopState = () => {
+      onClose();
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    if (window.history.state?.modalOpen === 'settings') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
 
   const handleSetTheme = (newTheme) => {
     theme.applyTheme(newTheme);
@@ -26,12 +47,15 @@ export default function SettingsModal({ isOpen, onClose }) {
 
   const handleLogout = () => {
     sound.playTap();
-    onClose();
+    handleClose();
     logout();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in select-none">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in select-none"
+      onClick={handleClose}
+    >
       <div
         className="bg-panel border border-line rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-pop-in flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -46,7 +70,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             <h2 className="text-base font-bold text-text">Settings</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 rounded-full grid place-items-center text-muted hover:text-text hover:bg-hover transition-colors"
             aria-label="Close settings"
           >

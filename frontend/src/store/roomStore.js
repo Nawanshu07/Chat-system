@@ -21,9 +21,10 @@ export const useRoomStore = create((set, get) => ({
       const rooms = data.rooms || [];
       set({ rooms, loading: false });
 
-      // If activeRoomId is not set or not in list, auto-select first room
+      // If activeRoomId is not set, auto-select first room on desktop only
       const currentActive = get().activeRoomId;
-      if (!currentActive && rooms.length > 0) {
+      const isMobileScreen = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
+      if (!isMobileScreen && !currentActive && rooms.length > 0) {
         set({ activeRoomId: rooms[0].id });
       }
     } catch (err) {

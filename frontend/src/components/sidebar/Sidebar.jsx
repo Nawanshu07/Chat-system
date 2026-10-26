@@ -37,6 +37,35 @@ export default function Sidebar({ onSelectRoom }) {
     fetchRooms();
   }, [fetchRooms]);
 
+  // Handle mobile hardware/gesture back when New Chat modal is open
+  useEffect(() => {
+    if (!isNewChatOpen) return;
+    window.history.pushState({ modalOpen: 'new-chat' }, '');
+    const handlePopState = () => {
+      setIsNewChatOpen(false);
+      setUserSearchQuery('');
+      setGroupName('');
+      setSelectedGroupMemberIds([]);
+      setGroupError('');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isNewChatOpen]);
+
+  const handleCloseNewChat = () => {
+    if (window.history.state?.modalOpen === 'new-chat') {
+      window.history.back();
+    } else {
+      setIsNewChatOpen(false);
+      setUserSearchQuery('');
+      setGroupName('');
+      setSelectedGroupMemberIds([]);
+      setGroupError('');
+    }
+  };
+
   // Search users for new chat modal
   useEffect(() => {
     if (!isNewChatOpen) return;
@@ -305,8 +334,14 @@ export default function Sidebar({ onSelectRoom }) {
 
       {/* New Conversation & Create Group Modal */}
       {isNewChatOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
-          <div className="bg-panel border border-line rounded-2xl w-full max-w-md p-4 sm:p-5 flex flex-col shadow-2xl animate-pop-in max-h-[85vh]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs select-none"
+          onClick={handleCloseNewChat}
+        >
+          <div
+            className="bg-panel border border-line rounded-2xl w-full max-w-md p-4 sm:p-5 flex flex-col shadow-2xl animate-pop-in max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header with Tabs */}
             <div className="flex items-center justify-between pb-3 border-b border-line flex-shrink-0">
               <div className="flex items-center gap-1 bg-bg p-1 rounded-xl border border-line/60">
@@ -339,13 +374,7 @@ export default function Sidebar({ onSelectRoom }) {
               </div>
 
               <button
-                onClick={() => {
-                  setIsNewChatOpen(false);
-                  setUserSearchQuery('');
-                  setGroupName('');
-                  setSelectedGroupMemberIds([]);
-                  setGroupError('');
-                }}
+                onClick={handleCloseNewChat}
                 className="text-muted hover:text-text w-8 h-8 rounded-full flex items-center justify-center hover:bg-hover transition-colors"
                 aria-label="Close"
               >

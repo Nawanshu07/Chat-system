@@ -23,6 +23,26 @@ export default function GroupInfoModal({ room, onClose }) {
   const [isLeaving, setIsLeaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Handle mobile hardware/gesture back
+  useEffect(() => {
+    window.history.pushState({ modalOpen: 'group-info' }, '');
+    const handlePopState = () => {
+      onClose();
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [onClose]);
+
+  const handleClose = () => {
+    if (window.history.state?.modalOpen === 'group-info') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
+
   const members = room?.members || [];
   const currentMemberIds = new Set(members.map((m) => m.id));
 
@@ -106,8 +126,14 @@ export default function GroupInfoModal({ room, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs animate-fade-in">
-      <div className="bg-panel border border-line rounded-2xl w-full max-w-lg p-5 flex flex-col shadow-2xl animate-pop-in max-h-[90vh]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs animate-fade-in"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-panel border border-line rounded-2xl w-full max-w-lg p-5 flex flex-col shadow-2xl animate-pop-in max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-line flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -119,7 +145,7 @@ export default function GroupInfoModal({ room, onClose }) {
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-muted hover:text-text w-8 h-8 rounded-full flex items-center justify-center hover:bg-hover transition-colors"
             aria-label="Close"
           >

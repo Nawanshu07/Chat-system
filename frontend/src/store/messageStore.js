@@ -65,6 +65,11 @@ export const useMessageStore = create((set, get) => ({
       messages: { ...s.messages, [roomId]: messages },
     })),
 
+  clearRoomMessages: (roomId) =>
+    set((s) => ({
+      messages: { ...s.messages, [roomId]: [] },
+    })),
+
   setTyping: (roomId, userId, username) =>
     set((s) => ({
       typingUsers: {
