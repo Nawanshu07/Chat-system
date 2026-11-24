@@ -10,6 +10,7 @@ import { initSocket } from './socket/handler.js';
 
 const app = express();
 app.use(cors({ origin: CORS_ORIGIN }));
+app.get('/health', (_req, res) => res.sendStatus(200));
 app.use(express.json());
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', app: 'Smalltalk' }));
 app.use('/api/auth', auth);
