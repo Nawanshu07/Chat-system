@@ -18,4 +18,4 @@ const schema = fs.readFileSync(schemaPath, 'utf8');
 const provider = sqlite ? 'sqlite' : 'postgresql';
 const prepared = schema.replace(/(datasource db\s*\{\s*provider\s*=\s*)"[^"]+"/, '$1"' + provider + '"');
 if (prepared !== schema) fs.writeFileSync(schemaPath, prepared);
-console.log('Preparing Smalltalk for ' + provider);
+console.log('Preparing Xwhispers for ' + provider);

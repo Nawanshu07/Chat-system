@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({ origin: CORS_ORIGIN }));
 app.get('/health', (_req, res) => res.sendStatus(200));
 app.use(express.json());
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', app: 'Smalltalk' }));
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', app: 'Xwhispers' }));
 app.use('/api/auth', auth);
 app.use('/api/users', users);
 app.use('/api/rooms', rooms);
@@ -24,4 +24,4 @@ app.use((err, req, res, next) => {
 
 const server = http.createServer(app);
 initSocket(server, CORS_ORIGIN);
-server.listen(PORT, () => console.log('Smalltalk is listening on port ' + PORT));
+server.listen(PORT, () => console.log('Xwhispers is listening on port ' + PORT));

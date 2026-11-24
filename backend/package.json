@@ -1,7 +1,7 @@
 {
   "name": "smalltalk-server",
   "version": "1.0.0",
-  "description": "Private messaging API for Smalltalk",
+  "description": "Private messaging API for Xwhispers",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

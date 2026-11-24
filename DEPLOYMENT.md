@@ -1,4 +1,4 @@
-# Deploying Smalltalk
+# Deploying Xwhispers
 
 The existing Vercel project serves the React frontend. The Render web service runs Express and Socket.IO with PostgreSQL. Keep the existing projects and database when deploying an update.
 

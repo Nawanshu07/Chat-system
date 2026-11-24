@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { request } from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import AppName from '../components/AppName';
 
 const titles = {
   login: 'Sign in', register: 'Create an account', verify: 'Verify your email',
@@ -59,7 +60,7 @@ export default function AuthPage() {
   return <main className="auth-wrap"><section className="auth-card">
     <h1>{titles[page]}</h1>
     <p className="intro">{needsCode ? 'Enter the six-digit code sent to ' + email + '.' :
-      page === 'forgot' ? 'Enter the email address you use for Smalltalk.' :
+      page === 'forgot' ? <>Enter the email address you use for <AppName />.</> :
       page === 'register' ? 'Choose a username so friends can find you.' : 'Sign in to your conversations.'}</p>
     <form key={page} onSubmit={submit}>
       <fieldset disabled={busy}>
@@ -81,7 +82,7 @@ export default function AuthPage() {
     </form>
     <div className="auth-links">
       {page === 'verify' && <button className="link" disabled={busy} onClick={resend}>Send another code</button>}
-      {page === 'login' ? <>New to Smalltalk? <button className="link" disabled={busy} onClick={() => changePage('register')}>Create an account</button></> :
+      {page === 'login' ? <>New to <AppName />? <button className="link" disabled={busy} onClick={() => changePage('register')}>Create an account</button></> :
         <button className="link" disabled={busy} onClick={() => changePage('login')}>Back to sign in</button>}
     </div>
   </section></main>;

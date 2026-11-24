@@ -1,6 +1,6 @@
-# Smalltalk
+# Xwhispers
 
-Smalltalk is a simple chat app. Sign in, choose **New chat**, search for a username, and send a message. Conversations are private to their members, and message history is available after signing back in.
+Xwhispers is a simple chat app. Sign in, choose **New chat**, search for a username, and send a message. Conversations are private to their members, and message history is available after signing back in.
 
 ## How it works
 

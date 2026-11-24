@@ -33,6 +33,8 @@ button.primary, button.plain { border-radius: 2px; padding: .65rem 1rem; font-we
 .brand, .account { display: flex; align-items: center; gap: .65rem; }
 .brand { font-size: 1.2rem; font-weight: 700; }
 .brand img { width: 1.9rem; height: 1.9rem; }
+.app-name { color: #000; }
+.app-name > span { color: #2428DB; }
 .account { font-size: .875rem; color: var(--muted); min-width: 0; }
 .account span { overflow: hidden; text-overflow: ellipsis; }
 .account button { flex-shrink: 0; padding: .4rem .7rem; }

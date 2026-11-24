@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore';
 import { request } from './services/api';
 import AuthPage from './pages/AuthPage';
 import ChatPage from './pages/ChatPage';
+import AppName from './components/AppName';
 
 export default function App() {
   const { user, token, logout } = useAuthStore();
@@ -13,7 +14,7 @@ export default function App() {
   return <BrowserRouter>
     <header className="topbar">
       <div className="bar-inner">
-        <span className="brand"><img src="/smalltalk.svg" alt="" />Smalltalk</span>
+        <span className="brand"><img src="/smalltalk.svg" alt="" /><AppName /></span>
         {signedIn && <div className="account"><span>@{user.username}</span>
           <button className="plain" onClick={logout}>Sign out</button></div>}
       </div>

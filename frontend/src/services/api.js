@@ -15,7 +15,7 @@ export async function request(path, { body, signal } = {}) {
     });
   } catch (error) {
     if (error.name === 'AbortError') throw error;
-    throw new Error('Could not reach Smalltalk. Please try again.');
+    throw new Error('Could not reach Xwhispers. Please try again.');
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
