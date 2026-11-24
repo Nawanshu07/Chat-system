@@ -1,7 +1,7 @@
 {
-  "name": "chat-system-backend",
+  "name": "smalltalk-server",
   "version": "1.0.0",
-  "description": "Express and Prisma REST API backend for Chat System",
+  "description": "Private messaging API for Smalltalk",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

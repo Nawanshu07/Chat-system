@@ -3,60 +3,22 @@ import prisma from '../db/prisma.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
+router.use(authenticateToken);
+router.get('/me', (req, res) => res.json({ user: req.user }));
 
-// GET /api/users/me — Current user profile
-router.get('/me', authenticateToken, async (req, res) => {
-  return res.json({ user: req.user });
-});
-
-// GET /api/users — List registered users to chat with (excludes self, supports search)
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
-    const { search } = req.query;
-    const currentUserId = req.user.id;
-
-    const where = {
-      id: { not: currentUserId },
-    };
-
-    const isPostgres = (process.env.DATABASE_URL || '').startsWith('postgres');
-
-    if (search && typeof search === 'string') {
-      const raw = search.trim();
-      const cleanQ = raw.startsWith('@') ? raw.slice(1).trim() : raw;
-      if (cleanQ.length > 0) {
-        const makeContains = (field) =>
-          isPostgres
-            ? { [field]: { contains: cleanQ, mode: 'insensitive' } }
-            : { [field]: { contains: cleanQ } };
-
-        where.OR = [
-          makeContains('username'),
-          makeContains('email'),
-        ];
-      }
-    }
-
+    const term = String(req.query.search || '').trim().replace(/^@/, '');
+    const username = { contains: term };
+    if (process.env.DATABASE_URL?.startsWith('postgres')) username.mode = 'insensitive';
     const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar: true,
-        avatarColor: true,
-        isOnline: true,
-        createdAt: true,
-      },
-      take: 50,
+      where: { username, isEmailVerified: true, id: { not: req.user.id } },
+      select: { id: true, username: true },
       orderBy: { username: 'asc' },
+      take: 50,
     });
-
-    return res.json({ users });
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return res.status(500).json({ error: 'Failed to fetch users' });
-  }
+    res.json({ users });
+  } catch (error) { next(error); }
 });
 
 export default router;

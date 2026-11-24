@@ -1,135 +1,26 @@
-import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const base = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+export const socketUrl = import.meta.env.VITE_SOCKET_URL || new URL(base, window.location.origin).origin;
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 45000, // 45 seconds tolerance for cloud cold-starts
-});
-
-// Attach JWT token to requests if available
-api.interceptors.request.use(
-  (config) => {
-    let token = useAuthStore.getState().token;
-    if (!token) {
-      try {
-        const raw = localStorage.getItem('chat-auth');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          token = parsed?.state?.token;
-        }
-      } catch {
-        // ignore parse error
-      }
-    }
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Global response interceptor for 401 handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear expired auth session
-      useAuthStore.getState().logout();
-    }
-    return Promise.reject(error);
+export async function request(path, { body, signal } = {}) {
+  const { token, logout } = useAuthStore.getState();
+  const headers = {};
+  if (token) headers.Authorization = 'Bearer ' + token;
+  if (body) headers['Content-Type'] = 'application/json';
+  let response;
+  try {
+    response = await fetch(base + path, {
+      method: body ? 'POST' : 'GET', headers, body: JSON.stringify(body), signal,
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('Could not reach Smalltalk. Please try again.');
   }
-);
-
-// Auth Endpoints
-export const authApi = {
-  login: async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    return res.data;
-  },
-  register: async (username, email, password) => {
-    const res = await api.post('/auth/register', { username, email, password });
-    return res.data;
-  },
-  verifyEmail: async (email, otp) => {
-    const res = await api.post('/auth/verify-email', { email, otp });
-    return res.data;
-  },
-  resendOtp: async (email, type = 'VERIFY_EMAIL') => {
-    const res = await api.post('/auth/resend-otp', { email, type });
-    return res.data;
-  },
-  forgotPassword: async (email) => {
-    const res = await api.post('/auth/forgot-password', { email });
-    return res.data;
-  },
-  resetPassword: async (email, otp, newPassword) => {
-    const res = await api.post('/auth/reset-password', { email, otp, newPassword });
-    return res.data;
-  },
-  getMe: async () => {
-    const res = await api.get('/users/me');
-    return res.data;
-  },
-};
-
-// Users Endpoints
-export const usersApi = {
-  search: async (search = '') => {
-    const res = await api.get('/users', { params: { search } });
-    return res.data;
-  },
-};
-
-// Rooms Endpoints
-export const roomsApi = {
-  getRooms: async () => {
-    const res = await api.get('/rooms');
-    return res.data;
-  },
-  createDM: async (participantId) => {
-    const res = await api.post('/rooms', { isDM: true, participantId });
-    return res.data;
-  },
-  createGroup: async (name, memberIds) => {
-    const res = await api.post('/rooms', { isDM: false, name, memberIds });
-    return res.data;
-  },
-  getRoomById: async (roomId) => {
-    const res = await api.get(`/rooms/${roomId}`);
-    return res.data;
-  },
-  addMembers: async (roomId, memberIds) => {
-    const res = await api.post(`/rooms/${roomId}/members`, { memberIds });
-    return res.data;
-  },
-  leaveGroup: async (roomId) => {
-    const res = await api.post(`/rooms/${roomId}/leave`);
-    return res.data;
-  },
-  updateGroup: async (roomId, data) => {
-    const res = await api.patch(`/rooms/${roomId}`, data);
-    return res.data;
-  },
-};
-
-// Messages Endpoints
-export const messagesApi = {
-  getMessages: async (roomId, limit = 50, before = null) => {
-    const params = { limit };
-    if (before) params.before = before;
-    const res = await api.get(`/rooms/${roomId}/messages`, { params });
-    return res.data;
-  },
-  sendMessage: async (roomId, content) => {
-    const res = await api.post(`/rooms/${roomId}/messages`, { content });
-    return res.data;
-  },
-};
-
-export default api;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 && token && useAuthStore.getState().token === token) logout();
+    throw Object.assign(new Error(data.error || 'The request failed. Please try again.'), { data });
+  }
+  return data;
+}

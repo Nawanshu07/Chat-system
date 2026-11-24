@@ -1,5 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import prisma from '../db/prisma.js';
 import { JWT_SECRET } from '../config.js';
@@ -9,16 +10,9 @@ const router = express.Router();
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
-const AVATAR_COLORS = [
-  'bg-[#2e5fa3]', // blue
-  'bg-[#7b3fa0]', // purple
-  'bg-[#a0522d]', // sienna
-  'bg-[#1e4d3b]', // green
-];
-
 // Helper to generate 6-digit numeric OTP code
 function generateOtpCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 // Helper to sign JWT
@@ -79,28 +73,18 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const colorIndex = Math.abs(
-      trimmedUsername.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    ) % AVATAR_COLORS.length;
-    const avatarColor = AVATAR_COLORS[colorIndex];
-    const avatar = trimmedUsername.charAt(0).toUpperCase();
-
     // Create or update unverified user
     await prisma.user.upsert({
       where: { email: normalizedEmail },
       update: {
         username: trimmedUsername,
         password: hashedPassword,
-        avatar,
-        avatarColor,
         isEmailVerified: false,
       },
       create: {
         username: trimmedUsername,
         email: normalizedEmail,
         password: hashedPassword,
-        avatar,
-        avatarColor,
         isEmailVerified: false,
       },
     });
@@ -177,8 +161,6 @@ router.post('/verify-email', async (req, res) => {
         id: true,
         username: true,
         email: true,
-        avatar: true,
-        avatarColor: true,
         createdAt: true,
       },
     });
@@ -429,8 +411,6 @@ router.post('/login', async (req, res) => {
       id: user.id,
       username: user.username,
       email: user.email,
-      avatar: user.avatar,
-      avatarColor: user.avatarColor,
       createdAt: user.createdAt,
     };
 

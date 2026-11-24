@@ -1,26 +1,21 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import 'dotenv/config';
 
-dotenv.config();
+const schemaPath = fileURLToPath(new URL('schema.prisma', import.meta.url));
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('Set DATABASE_URL in the backend environment.');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const schemaPath = path.join(__dirname, 'schema.prisma');
+const sqlite = databaseUrl.startsWith('file:');
+if (sqlite) {
+  const dbPath = path.resolve(path.dirname(schemaPath), databaseUrl.slice(5).split('?')[0]);
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  fs.closeSync(fs.openSync(dbPath, 'a'));
+}
 
-const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-const isPostgres = databaseUrl.startsWith('postgresql://') || databaseUrl.startsWith('postgres://');
-const targetProvider = isPostgres ? 'postgresql' : 'sqlite';
-
-console.log(`🔧 Preparing Prisma schema for: ${targetProvider.toUpperCase()}`);
-
-let schemaContent = fs.readFileSync(schemaPath, 'utf8');
-
-// Replace provider in datasource db block
-schemaContent = schemaContent.replace(
-  /datasource\s+db\s+\{[\s\S]*?provider\s*=\s*"[^"]+"/,
-  `datasource db {\n  provider = "${targetProvider}"`
-);
-
-fs.writeFileSync(schemaPath, schemaContent, 'utf8');
-console.log(`✅ Prisma schema configured for provider = "${targetProvider}"`);
+const schema = fs.readFileSync(schemaPath, 'utf8');
+const provider = sqlite ? 'sqlite' : 'postgresql';
+const prepared = schema.replace(/(datasource db\s*\{\s*provider\s*=\s*)"[^"]+"/, '$1"' + provider + '"');
+if (prepared !== schema) fs.writeFileSync(schemaPath, prepared);
+console.log('Preparing Smalltalk for ' + provider);

@@ -1,98 +1,30 @@
+// Run against a local server with two verified test accounts.
+import assert from 'node:assert/strict';
+import { once } from 'node:events';
 import { io } from 'socket.io-client';
 
-async function testSocket() {
-  const base = 'http://localhost:5000';
-
-  console.log('Logging in demo and mina...');
-  const demoLogin = await fetch(`${base}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'demo@example.com', password: 'Password1' }),
-  }).then((r) => r.json());
-
-  const minaLogin = await fetch(`${base}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'mina@example.com', password: 'Password1' }),
-  }).then((r) => r.json());
-
-  console.log('Demo token:', !!demoLogin.token, '| Mina token:', !!minaLogin.token);
-
-  // Connect Mina Socket
-  const minaSocket = io(base, {
-    auth: { token: minaLogin.token },
-    transports: ['websocket'],
-  });
-
-  // Connect Demo Socket
-  const demoSocket = io(base, {
-    auth: { token: demoLogin.token },
-    transports: ['websocket'],
-  });
-
-  await new Promise((resolve) => {
-    let connected = 0;
-    const check = () => {
-      connected++;
-      if (connected === 2) resolve();
-    };
-    minaSocket.on('connect', () => {
-      console.log('Mina connected to Socket.IO!');
-      check();
-    });
-    demoSocket.on('connect', () => {
-      console.log('Demo connected to Socket.IO!');
-      check();
-    });
-  });
-
-  // Fetch DM room between Demo and Mina
-  const roomsRes = await fetch(`${base}/api/rooms`, {
-    headers: { Authorization: `Bearer ${demoLogin.token}` },
-  }).then((r) => r.json());
-
-  const dmRoom = roomsRes.rooms.find((r) => r.name.toLowerCase() === 'mina');
-  console.log('Found DM room:', dmRoom.id);
-
-  // Mina joins the room
-  minaSocket.emit('join_room', { roomId: dmRoom.id });
-
-  // Listen on Mina for real-time message and conversation_updated
-  const messagePromise = new Promise((resolve) => {
-    minaSocket.on('new_message', (data) => {
-      console.log('⚡ Mina received real-time new_message:', data.message.content);
-      resolve(data);
-    });
-  });
-
-  const conversationPromise = new Promise((resolve) => {
-    minaSocket.on('conversation_updated', (data) => {
-      console.log('🔔 Mina received conversation_updated for room:', data.room.name, '| Last msg:', data.room.lastMessage);
-      resolve(data);
-    });
-  });
-
-  // Demo sends a message in the room
-  console.log('Demo sending message via socket...');
-  demoSocket.emit(
-    'send_message',
-    {
-      roomId: dmRoom.id,
-      content: 'Real-time test message via Socket.IO! 🚀',
-    },
-    (ack) => {
-      console.log('Demo send ack received:', ack.success);
-    }
-  );
-
-  await Promise.all([messagePromise, conversationPromise]);
-
-  console.log('\n🎉 Real-time instant delivery & sidebar push VERIFIED successfully!');
-  minaSocket.disconnect();
-  demoSocket.disconnect();
+const base = process.env.TEST_ORIGIN || 'http://localhost:5000';
+async function post(path, body, token) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const response = await fetch(base + '/api' + path, { method: 'POST', headers, body: JSON.stringify(body) });
+  assert.ok(response.ok, path + ' returned ' + response.status);
+  return response.json();
 }
 
-testSocket().catch((err) => {
-  console.error('Socket test error:', err);
-  process.exit(1);
-});
+const first = await post('/auth/login', { email: process.env.TEST_EMAIL_A || 'demo@example.com', password: process.env.TEST_PASSWORD || 'Password1' });
+const second = await post('/auth/login', { email: process.env.TEST_EMAIL_B || 'mina@example.com', password: process.env.TEST_PASSWORD || 'Password1' });
+const { room } = await post('/rooms', { participantId: second.user.id }, first.token);
+const socket = io(base, { auth: { token: second.token }, autoConnect: false });
+try {
+  const connected = once(socket, 'connect', { signal: AbortSignal.timeout(8000) });
+  socket.connect();
+  await connected;
+  const delivery = once(socket, 'new_message', { signal: AbortSignal.timeout(8000) });
+  const { message } = await post('/rooms/' + room.id + '/messages', { content: 'Testing live delivery.' }, first.token);
+  const [event] = await delivery;
+  assert.equal(event.message.id, message.id);
+  console.log('Verified live delivery between two accounts.');
+} finally {
+  socket.disconnect();
+}
